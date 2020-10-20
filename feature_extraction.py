@@ -1,5 +1,6 @@
 import pandas as pd
 import bert_parser.main as bp
+from datetime import datetime
 
 def extract_activity_features(df):
     df_w_actLabels = extract_activity_labels(df)
@@ -7,20 +8,58 @@ def extract_activity_features(df):
 
     return df_w_actLabels_ITrelated
 
+def extract_activity_features_full_log(df):
+    df_full_ef = extract_execution_frequency(df)
+    extract_execution_time(df_full_ef)
+
+
+def extract_execution_frequency(df):
+    ef_df = df['concept:name'].value_counts().reset_index()
+    ef_df.columns = ['concept:name', 'execution frequency']
+    result_df = df.join(ef_df.set_index('concept:name'), on='concept:name')
+    return result_df
+
+def extract_execution_time(df):
+    # print(df[['case:Rfp_id','concept:name', 'time:timestamp']])
+    duration = []
+    old_trace = ""
+    old_time = ""
+    for index, row in df.iterrows():
+        current_trace = row['case:Rfp_id']
+        current_time = row['time:timestamp']
+
+        if current_trace != old_trace:
+            # Start a new trace -> first activity has no duration
+            duration.append(None)
+        else:
+            dur = round((current_time-old_time).total_seconds() / 60, 2)
+            duration.append(dur)
+        old_trace = current_trace
+        old_time = current_time
+    df['duration_minutes'] = duration
+    median_et = df.groupby('concept:name')['duration_minutes'].median().reset_index()
+    median_et.columns = ['concept:name', 'median_execution_time']
+    result_df = df.join(median_et.set_index('concept:name'), on='concept:name')
+    return result_df
+
+
+
+
+
 def extract_activity_labels(df):
     events = df['concept:name']
     tagged_events = bp.main(events)
     bo = []
     action = []
     actor = []
-    act = []
+    actvty = []
     for activity in tagged_events:
-        act.append(activity)
+        actvty.append(activity)
         i = 0
         bo_indexes = []
         a_indexes = []
         actor_indexes = []
-        receiver_indexes = []
+
         # retrieve index of BO,A, ACTOR tags
         for tag in tagged_events[activity]:
             if tag == "BO":
@@ -32,7 +71,7 @@ def extract_activity_labels(df):
             i += 1
 
         activity_list_words = activity.split()
-        # iterate through all words of an activity and identify the BO, A, Actor, Receiver values and create a separate list for
+        # iterate through all words of an activity and identify the BO, A, Actor values and create a separate list for
         # each tag
         bo_values = []
         for b in bo_indexes:
@@ -49,7 +88,7 @@ def extract_activity_labels(df):
             actor_values.append(activity_list_words[ac])
         actor.append(" ".join(actor_values))
 
-    dict = {"activity": act, "business object": bo, "action": action, "executing resource": actor}
+    dict = {"activity": actvty, "business object": bo, "action": action, "executing resource": actor}
     result_df = pd.DataFrame(dict)
     return result_df
 
@@ -124,3 +163,5 @@ def extract_IT_relatedness(df):
             else:
                 row["IT relatedness"] = True
     return df
+
+

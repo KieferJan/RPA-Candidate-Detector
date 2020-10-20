@@ -13,8 +13,9 @@ def import_xes():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     default_df = import_xes()
-    activity_features_df = fe.extract_activity_features(default_df)
-    print(activity_features_df)
+    # activity_features_df = fe.extract_activity_features(default_df)
+    fe.extract_activity_features_full_log(default_df)
+    # print(activity_features_df)
 
 
 
