@@ -13,9 +13,14 @@ def import_xes():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     default_df = import_xes()
-    # activity_features_df = fe.extract_activity_features(default_df)
-    fe.extract_activity_features_full_log(default_df)
-    # print(activity_features_df)
+    distinct_activity_features_df = fe.extract_activity_features(default_df)
+    full_activity_features_df = fe.extract_activity_features_full_log(default_df)
+
+    # join the two different types of data frames (full trace into distinct activities AND
+    # distinct activities into full trace)
+    distinct_activity_features_df = fe.join_full_in_distinct(full_activity_features_df, distinct_activity_features_df)
+    full_activity_features_df = fe.join_distinct_in_full(distinct_activity_features_df, full_activity_features_df)
+    # print(distinct_activity_features_df)
 
 
 

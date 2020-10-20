@@ -1,6 +1,34 @@
 import pandas as pd
 import bert_parser.main as bp
-from datetime import datetime
+
+def join_full_in_distinct(full_df, distinct_df):
+    # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
+    # dataframe with distinct activities
+    # group the data frame that contains data from all traces
+    full_grouped_ef = full_df.groupby('concept:name')['execution frequency'].mean().reset_index()
+    full_grouped_et = full_df.groupby('concept:name')['median_execution_time'].median().reset_index()
+    # PREPROCCES the data frame
+    # set column header
+    full_grouped_et.columns = ['concept:name', 'median_execution_time']
+    full_grouped_ef.columns = ['concept:name', 'execution frequency']
+    # make key column (concept:name) to lower case to apply join
+    full_grouped_ef['concept:name'] = full_grouped_ef['concept:name'].apply(lambda x: x.lower())
+    full_grouped_et['concept:name'] = full_grouped_et['concept:name'].apply(lambda x: x.lower())
+    # replace the character "_" with " " to apply joining
+    full_grouped_ef['concept:name'] = full_grouped_ef['concept:name'].apply(lambda x: x.replace("_", " "))
+    full_grouped_et['concept:name'] = full_grouped_et['concept:name'].apply(lambda x: x.replace("_", " "))
+
+    result_df = distinct_df.join(full_grouped_ef.set_index('concept:name'), on='activity')
+    result_df = result_df.join(full_grouped_et.set_index('concept:name'), on='activity')
+
+    return result_df
+
+def join_distinct_in_full(distinct_df, full_df):
+    full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.lower())
+    full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.replace("_", " "))
+
+    result_df = full_df.join(distinct_df.set_index('activity'), on='concept:name')
+    return result_df
 
 def extract_activity_features(df):
     df_w_actLabels = extract_activity_labels(df)
@@ -10,7 +38,9 @@ def extract_activity_features(df):
 
 def extract_activity_features_full_log(df):
     df_full_ef = extract_execution_frequency(df)
-    extract_execution_time(df_full_ef)
+    df_full_ef_et = extract_execution_time(df_full_ef)
+
+    return df_full_ef_et
 
 
 def extract_execution_frequency(df):
