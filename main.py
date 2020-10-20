@@ -1,5 +1,4 @@
 import pandas as pd
-import bert_parser.main as bp
 from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.log.importer.xes import importer as xes_importer
 import feature_extraction as fe
@@ -14,8 +13,8 @@ def import_xes():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     default_df = import_xes()
-    task_df = fe.extract_activity_features(default_df)
-    print(task_df)
+    activity_features_df = fe.extract_activity_features(default_df)
+    print(activity_features_df)
 
 
 
