@@ -13,8 +13,8 @@ def import_xes():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    event_df = import_xes()
-    task_df = fe.extract_activity_labels(event_df)
+    default_df = import_xes()
+    task_df = fe.extract_activity_features(default_df)
     print(task_df)
 
 

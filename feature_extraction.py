@@ -1,6 +1,11 @@
 import pandas as pd
 import bert_parser.main as bp
 
+def extract_activity_features(df):
+    df_w_actLabels = extract_activity_labels(df)
+    df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
+
+    return df_w_actLabels_ITrelated
 
 def extract_activity_labels(df):
     events = df['concept:name']
@@ -46,7 +51,7 @@ def extract_activity_labels(df):
 
     dict = {"activity": act, "business object": bo, "action": action, "executing resource": actor}
     result_df = pd.DataFrame(dict)
-    extract_IT_relatedness(result_df)
+    return result_df
 
 
 def extract_IT_relatedness(df):
@@ -118,4 +123,4 @@ def extract_IT_relatedness(df):
                 row["IT relatedness"] = False
             else:
                 row["IT relatedness"] = True
-    print(df)
+    return df
