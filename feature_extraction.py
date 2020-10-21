@@ -188,7 +188,8 @@ def extract_IT_relatedness(df):
                         'workstation', 'write', 'WWW', 'X window system', 'X-term']
     for index, row in df.iterrows():
         for term in it_related_terms:
-            if row["activity"].find(term) == -1:
+            activity = row["activity"].lower()
+            if activity.find(term.lower()) == -1:
                 row["IT relatedness"] = False
             else:
                 row["IT relatedness"] = True
