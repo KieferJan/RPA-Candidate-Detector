@@ -1,5 +1,6 @@
 import pandas as pd
 import bert_parser.main as bp
+import spacy
 
 def join_full_in_distinct(full_df, distinct_df):
     # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
@@ -124,7 +125,7 @@ def extract_activity_labels(df):
 
 
 def extract_IT_relatedness(df):
-    df['IT relatedness'] = pd.Series(dtype='str')
+    nlp = spacy.load("en_core_web_md")
     it_related_terms = ['access', 'Access Control List', 'access time', 'account', 'account name', 'address',
                         'aggregate', 'aggregate data', 'algorithm', 'alias', 'analog', 'Application Layer',
                         'application', 'application program', 'application software', 'archive', 'argument', 'ASCII',
@@ -186,13 +187,20 @@ def extract_IT_relatedness(df):
                         'utility', 'variable', 'vision', 'virtual', 'virtual terminal', 'VMS', 'virus', 'volume',
                         'wavelength', 'whois', 'window', 'Windows', 'word processor ', 'wordwrap', 'work space',
                         'workstation', 'write', 'WWW', 'X window system', 'X-term']
+    it_related_terms = ' '.join(it_related_terms)
+    it_tokens = nlp(it_related_terms)
+    max_similarities = []
     for index, row in df.iterrows():
-        for term in it_related_terms:
-            activity = row["activity"].lower()
-            if activity.find(term.lower()) == -1:
-                row["IT relatedness"] = False
-            else:
-                row["IT relatedness"] = True
+        similarity_dict = {}
+        activity = row["activity"].lower()
+        activity_tokens = nlp(activity)
+        for activity_token in activity_tokens:
+            for it_token in it_tokens:
+                if activity_token.has_vector and it_token.has_vector:
+                    similarity_dict[activity_token.text + it_token.text] = activity_token.similarity(it_token)
+        max_similarities.append(max(similarity_dict.values()))
+
+    df['IT relatedness'] = max_similarities
     return df
 
 
