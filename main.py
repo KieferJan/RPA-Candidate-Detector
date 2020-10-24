@@ -19,9 +19,9 @@ if __name__ == '__main__':
     # join the two different types of data frames (full trace into distinct activities AND
     # distinct activities into full trace)
     activity_df = fe.join_full_in_distinct(full_activity_features_df, distinct_activity_features_df)
-    full_df = fe.join_distinct_in_full(distinct_activity_features_df, full_activity_features_df)
+
     print(activity_df)
-    print(full_df.head(10))
+    print(full_activity_features_df.head(10))
     # activity_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/activity.csv', index=False, header=True)
     # full_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
 
