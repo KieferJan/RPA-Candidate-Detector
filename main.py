@@ -23,7 +23,7 @@ if __name__ == '__main__':
     print(activity_df)
     print(full_activity_features_df.head(10))
     # activity_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/activity.csv', index=False, header=True)
-    # full_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
+    # full_activity_features_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
 
 
 

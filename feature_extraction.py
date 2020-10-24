@@ -11,7 +11,7 @@ def join_full_in_distinct(full_df, distinct_df):
     # PREPROCCES the data frame
     # set column header
     full_grouped_et.columns = ['concept:name', 'median_execution_time']
-    full_grouped_ef.columns = ['concept:name', 'execution frequency']
+    full_grouped_ef.columns = ['concept:name', 'ef_relative']
 
     result_df = distinct_df.join(full_grouped_ef.set_index('concept:name'), on='activity')
     result_df = result_df.join(full_grouped_et.set_index('concept:name'), on='activity')
