@@ -8,13 +8,16 @@ def join_full_in_distinct(full_df, distinct_df):
     # group the data frame that contains data from all traces
     full_grouped_ef = full_df.groupby('concept:name')['ef_relative'].mean().reset_index()
     full_grouped_et = full_df.groupby('concept:name')['median_execution_time'].median().reset_index()
+    full_grouped_rel_et = full_df.groupby('concept:name')['et_relative'].median().reset_index()
     # PREPROCCES the data frame
     # set column header
     full_grouped_et.columns = ['concept:name', 'median_execution_time']
     full_grouped_ef.columns = ['concept:name', 'ef_relative']
+    full_grouped_rel_et.columns = ['concept:name', 'et_relative']
 
     result_df = distinct_df.join(full_grouped_ef.set_index('concept:name'), on='activity')
     result_df = result_df.join(full_grouped_et.set_index('concept:name'), on='activity')
+    result_df = result_df.join(full_grouped_rel_et.set_index('concept:name'), on='activity')
 
     return result_df
 
@@ -36,8 +39,6 @@ def extract_activity_features_full_log(df):
     df_full_ef_et = extract_execution_time(df_full_ef)
     df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.lower())
     df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.replace("_", " "))
-
-
     return df_full_ef_et
 
 
@@ -45,11 +46,9 @@ def extract_execution_frequency(df):
     relative_ef_df = df['concept:name'].value_counts(normalize=True).reset_index()
     relative_ef_df.columns = ['concept:name', 'ef_relative']
     result_df = df.join(relative_ef_df.set_index('concept:name'), on='concept:name')
-
     return result_df
 
 def extract_execution_time(df):
-    # print(df[['case:Rfp_id','concept:name', 'time:timestamp']])
     duration = []
     old_trace = ""
     old_time = ""
@@ -66,14 +65,20 @@ def extract_execution_time(df):
         old_trace = current_trace
         old_time = current_time
     df['duration_minutes'] = duration
+    #median et
     median_et = df.groupby('concept:name')['duration_minutes'].median().reset_index()
     median_et.columns = ['concept:name', 'median_execution_time']
     result_df = df.join(median_et.set_index('concept:name'), on='concept:name')
+    #relative et
+    grouped_sum_et = df.groupby('concept:name')['duration_minutes'].sum().reset_index()
+    sum_et = df['duration_minutes'].sum()
+    grouped_sum_et.columns = ['concept:name', 'sum_execution_time']
+    result_df = result_df.join(grouped_sum_et.set_index('concept:name'), on='concept:name')
+    relative_durations = []
+    for index, row in result_df.iterrows():
+        relative_durations.append(row['sum_execution_time'] / sum_et)
+    result_df['et_relative'] = relative_durations
     return result_df
-
-
-
-
 
 def extract_activity_labels(df):
     events = df['concept:name']
