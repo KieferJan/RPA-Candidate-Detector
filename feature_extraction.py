@@ -1,6 +1,7 @@
 import pandas as pd
 import bert_parser.main as bp
 import spacy
+from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
 
 def join_full_in_distinct(full_df, distinct_df):
     # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
@@ -28,11 +29,13 @@ def join_distinct_in_full(distinct_df, full_df):
     result_df = full_df.join(distinct_df.set_index('activity'), on='concept:name')
     return result_df
 
-def extract_activity_features(df):
+
+def extract_activity_features(df, log):
     df_w_actLabels = extract_activity_labels(df)
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
+    df_w_actLabels_ITrelated_deterministic = extract_deterministic_feature(df_w_actLabels_ITrelated, log)
+    return df_w_actLabels_ITrelated_deterministic
 
-    return df_w_actLabels_ITrelated
 
 def extract_activity_features_full_log(df):
     df_full_ef = extract_execution_frequency(df)
@@ -40,6 +43,51 @@ def extract_activity_features_full_log(df):
     df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.lower())
     df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.replace("_", " "))
     return df_full_ef_et
+
+
+def extract_deterministic_feature(df, log):
+    fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG)
+    directly_follows = fp_log['sequence']
+    # dict for following activity
+    df_dict = {}
+    # dict for preceding activity
+    dp_dict = {}
+    for val in directly_follows:
+        tuple_list = list(val)
+        tuple_list[0] = tuple_list[0].lower().replace('_', ' ')
+        tuple_list[1] = tuple_list[1].lower().replace('_', ' ')
+        if tuple_list[0] not in df_dict:
+            value = [tuple_list[1]]
+            kv = {tuple_list[0]: value}
+            df_dict.update(kv)
+        else:
+            value = df_dict.get(tuple_list[0])
+            value.append(tuple_list[1])
+            kv = {tuple_list[0]: value}
+            df_dict.update(kv)
+        if tuple_list[1] not in dp_dict:
+            dp_value = [tuple_list[0]]
+            dp_kv = {tuple_list[1]: dp_value}
+            dp_dict.update(dp_kv)
+        else:
+            dp_value = dp_dict.get(tuple_list[1])
+            dp_value.append(tuple_list[0])
+            dp_kv = {tuple_list[1]: dp_value}
+            dp_dict.update(dp_kv)
+    df_list = []
+    for key in df_dict:
+        df_list.append([key, True if len(df_dict[key]) == 1 else False ])
+    df_dataframe = pd.DataFrame(df_list, columns=['activity', 'deterministic_next_activity'])
+    dp_list = []
+    for key in dp_dict:
+        dp_list.append([key, True if len(dp_dict[key]) == 1 else False ])
+    dp_dataframe = pd.DataFrame(dp_list, columns=['activity', 'deterministic_preceding_activity'])
+
+    result_df = df.join(df_dataframe.set_index('activity'), on='activity')
+    result_df = result_df.join(dp_dataframe.set_index('activity'), on='activity')
+    result_df['deterministic_next_activity'].fillna(False, inplace=True)
+    result_df['deterministic_preceding_activity'].fillna(False, inplace=True)
+    return result_df
 
 
 def extract_execution_frequency(df):
