@@ -3,46 +3,71 @@ import bert_parser.main as bp
 import spacy
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
 
+ACTIVITY_COLUMN_NAME = 'concept:name'
+CASE_COLUMN_NAME = 'case:Rfp_id'
+
 def join_full_in_distinct(full_df, distinct_df):
     # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
     # dataframe with distinct activities
     # group the data frame that contains data from all traces
-    full_grouped_ef = full_df.groupby('concept:name')['ef_relative'].mean().reset_index()
-    full_grouped_et = full_df.groupby('concept:name')['median_execution_time'].median().reset_index()
-    full_grouped_rel_et = full_df.groupby('concept:name')['et_relative'].median().reset_index()
+    full_grouped_ef = full_df.groupby('activity')['ef_relative'].mean().reset_index()
+    full_grouped_et = full_df.groupby('activity')['median_execution_time'].median().reset_index()
+    full_grouped_rel_et = full_df.groupby('activity')['et_relative'].median().reset_index()
     # PREPROCCES the data frame
     # set column header
-    full_grouped_et.columns = ['concept:name', 'median_execution_time']
-    full_grouped_ef.columns = ['concept:name', 'ef_relative']
-    full_grouped_rel_et.columns = ['concept:name', 'et_relative']
+    full_grouped_et.columns = ['activity', 'median_execution_time']
+    full_grouped_ef.columns = ['activity', 'ef_relative']
+    full_grouped_rel_et.columns = ['activity', 'et_relative']
 
-    result_df = distinct_df.join(full_grouped_ef.set_index('concept:name'), on='activity')
-    result_df = result_df.join(full_grouped_et.set_index('concept:name'), on='activity')
-    result_df = result_df.join(full_grouped_rel_et.set_index('concept:name'), on='activity')
+    result_df = distinct_df.join(full_grouped_ef.set_index('activity'), on='activity')
+    result_df = result_df.join(full_grouped_et.set_index('activity'), on='activity')
+    result_df = result_df.join(full_grouped_rel_et.set_index('activity'), on='activity')
 
     return result_df
 
-def join_distinct_in_full(distinct_df, full_df):
-    full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.lower())
-    full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.replace("_", " "))
+# def join_distinct_in_full(distinct_df, full_df):
+#     full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.lower())
+#     full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.replace("_", " "))
+#
+#     result_df = full_df.join(distinct_df.set_index('activity'), on='concept:name')
+#     return result_df
 
-    result_df = full_df.join(distinct_df.set_index('activity'), on='concept:name')
-    return result_df
 
-
-def extract_activity_features(df, log):
+def extract_activity_features(df, xes_log):
+    df.rename(columns={ACTIVITY_COLUMN_NAME: "activity"}, inplace=True)
+    df['activity'] = df['activity'].apply(lambda x: x.lower())
+    df['activity'] = df['activity'].apply(lambda x: x.replace("_", " "))
     df_w_actLabels = extract_activity_labels(df)
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
-    df_w_actLabels_ITrelated_deterministic = extract_deterministic_feature(df_w_actLabels_ITrelated, log)
-    return df_w_actLabels_ITrelated_deterministic
+    df_w_actLabels_ITrelated_deterministic = extract_deterministic_feature(df_w_actLabels_ITrelated, xes_log)
+    df_w_actLabels_ITrelated_deterministic_fr = extract_failure_rate(df_w_actLabels_ITrelated_deterministic, df)
+    return df_w_actLabels_ITrelated_deterministic_fr
 
 
 def extract_activity_features_full_log(df):
+    df.rename(columns={ACTIVITY_COLUMN_NAME: "activity"}, inplace=True)
     df_full_ef = extract_execution_frequency(df)
     df_full_ef_et = extract_execution_time(df_full_ef)
-    df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.lower())
-    df_full_ef_et['concept:name'] = df_full_ef_et['concept:name'].apply(lambda x: x.replace("_", " "))
+    df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.lower())
+    df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.replace("_", " "))
     return df_full_ef_et
+
+
+def extract_failure_rate(df, full_df):
+    df_act_trace_occurrence = full_df.groupby('activity')[CASE_COLUMN_NAME].nunique().reset_index()
+    df_act_trace_occurrence.columns = ['activity', 'trace_occurrence']
+    df_act_count = full_df['activity'].value_counts().reset_index()
+    df_act_count.columns = ['activity', 'activity_count']
+    df_actcount_traceocc = df_act_trace_occurrence.join(df_act_count.set_index('activity'), on='activity')
+
+    avg_exec = []
+    for index, row in df_actcount_traceocc.iterrows():
+         avg_exec.append(row['activity_count'] / row['trace_occurrence'])
+    df_actcount_traceocc['failure_rate'] = avg_exec
+    df_actcount_traceocc.drop(columns=['activity_count', 'trace_occurrence'], inplace=True)
+    df = df.join(df_actcount_traceocc.set_index('activity'), on='activity')
+
+    return df
 
 
 def extract_deterministic_feature(df, log):
@@ -91,9 +116,9 @@ def extract_deterministic_feature(df, log):
 
 
 def extract_execution_frequency(df):
-    relative_ef_df = df['concept:name'].value_counts(normalize=True).reset_index()
-    relative_ef_df.columns = ['concept:name', 'ef_relative']
-    result_df = df.join(relative_ef_df.set_index('concept:name'), on='concept:name')
+    relative_ef_df = df['activity'].value_counts(normalize=True).reset_index()
+    relative_ef_df.columns = ['activity', 'ef_relative']
+    result_df = df.join(relative_ef_df.set_index('activity'), on='activity')
     return result_df
 
 def extract_execution_time(df):
@@ -114,14 +139,14 @@ def extract_execution_time(df):
         old_time = current_time
     df['duration_minutes'] = duration
     #median et
-    median_et = df.groupby('concept:name')['duration_minutes'].median().reset_index()
-    median_et.columns = ['concept:name', 'median_execution_time']
-    result_df = df.join(median_et.set_index('concept:name'), on='concept:name')
+    median_et = df.groupby('activity')['duration_minutes'].median().reset_index()
+    median_et.columns = ['activity', 'median_execution_time']
+    result_df = df.join(median_et.set_index('activity'), on='activity')
     #relative et
-    grouped_sum_et = df.groupby('concept:name')['duration_minutes'].sum().reset_index()
+    grouped_sum_et = df.groupby('activity')['duration_minutes'].sum().reset_index()
     sum_et = df['duration_minutes'].sum()
-    grouped_sum_et.columns = ['concept:name', 'sum_execution_time']
-    result_df = result_df.join(grouped_sum_et.set_index('concept:name'), on='concept:name')
+    grouped_sum_et.columns = ['activity', 'sum_execution_time']
+    result_df = result_df.join(grouped_sum_et.set_index('activity'), on='activity')
     relative_durations = []
     for index, row in result_df.iterrows():
         relative_durations.append(row['sum_execution_time'] / sum_et)
@@ -129,7 +154,7 @@ def extract_execution_time(df):
     return result_df
 
 def extract_activity_labels(df):
-    events = df['concept:name']
+    events = df['activity']
     tagged_events = bp.main(events)
     bo = []
     action = []
