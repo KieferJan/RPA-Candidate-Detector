@@ -13,15 +13,18 @@ def join_full_in_distinct(full_df, distinct_df):
     full_grouped_ef = full_df.groupby('activity')['ef_relative'].mean().reset_index()
     full_grouped_et = full_df.groupby('activity')['median_execution_time'].median().reset_index()
     full_grouped_rel_et = full_df.groupby('activity')['et_relative'].median().reset_index()
+    full_grouped_stability = full_df.groupby('activity')['stability'].mean().reset_index()
     # PREPROCCES the data frame
     # set column header
     full_grouped_et.columns = ['activity', 'median_execution_time']
     full_grouped_ef.columns = ['activity', 'ef_relative']
     full_grouped_rel_et.columns = ['activity', 'et_relative']
+    full_grouped_stability.columns = ['activity', 'stability']
 
     result_df = distinct_df.join(full_grouped_ef.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_rel_et.set_index('activity'), on='activity')
+    result_df = result_df.join(full_grouped_stability.set_index('activity'), on='activity')
 
     return result_df
 
@@ -39,18 +42,33 @@ def extract_activity_features(df, xes_log):
     df['activity'] = df['activity'].apply(lambda x: x.replace("_", " "))
     df_w_actLabels = extract_activity_labels(df)
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
-    df_w_actLabels_ITrelated_deterministic = extract_deterministic_feature(df_w_actLabels_ITrelated, xes_log)
-    df_w_actLabels_ITrelated_deterministic_fr = extract_failure_rate(df_w_actLabels_ITrelated_deterministic, df)
-    return df_w_actLabels_ITrelated_deterministic_fr
+    df_w_actLabels_ITrelated_deterministic = extract_deterministic_standardization_feature(df_w_actLabels_ITrelated, xes_log)
+    df_w_actLabels_ITrelated_deterministic_std_fr = extract_failure_rate(df_w_actLabels_ITrelated_deterministic, df)
+    return df_w_actLabels_ITrelated_deterministic_std_fr
 
 
 def extract_activity_features_full_log(df):
     df.rename(columns={ACTIVITY_COLUMN_NAME: "activity"}, inplace=True)
     df_full_ef = extract_execution_frequency(df)
     df_full_ef_et = extract_execution_time(df_full_ef)
+    df_full_ef_et_stability = extract_stability(df_full_ef_et)
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.lower())
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.replace("_", " "))
-    return df_full_ef_et
+    return df_full_ef_et_stability
+
+
+def extract_stability(df):
+    # Retrieve std deviation
+    std_duration = df.groupby('activity')['duration_minutes'].std().reset_index()
+    std_duration.columns = ['activity', 'standard_deviation_duration']
+    result_df = df.join(std_duration.set_index('activity'), on='activity')
+    list_stability = []
+    # for each activity compute the stability by using a normalized variance
+    for index, row in result_df.iterrows():
+        list_stability.append(row['standard_deviation_duration'] ** 2 / (row['ef'] * row['avg_execution_time']))
+    result_df['stability'] = list_stability
+    result_df['stability'].fillna(0, inplace=True)
+    return result_df
 
 
 def extract_failure_rate(df, full_df):
@@ -70,13 +88,15 @@ def extract_failure_rate(df, full_df):
     return df
 
 
-def extract_deterministic_feature(df, log):
+def extract_deterministic_standardization_feature(df, log):
     fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG)
+    # Footprint DF from PM4PY
     directly_follows = fp_log['sequence']
     # dict for following activity
     df_dict = {}
     # dict for preceding activity
     dp_dict = {}
+    # Create dicts with activity as key and list of preceding / following activities as value
     for val in directly_follows:
         tuple_list = list(val)
         tuple_list[0] = tuple_list[0].lower().replace('_', ' ')
@@ -99,26 +119,43 @@ def extract_deterministic_feature(df, log):
             dp_value.append(tuple_list[0])
             dp_kv = {tuple_list[1]: dp_value}
             dp_dict.update(dp_kv)
+    # List for determinism following
     df_list = []
+    # List for standardization following
+    sf_list = []
     for key in df_dict:
         df_list.append([key, True if len(df_dict[key]) == 1 else False ])
-    df_dataframe = pd.DataFrame(df_list, columns=['activity', 'deterministic_next_activity'])
+        sf_list.append([key, len(df_dict[key])])
+    df_dataframe = pd.DataFrame(df_list, columns=['activity', 'deterministic_following_activity'])
+    sf_dataframe = pd.DataFrame(sf_list, columns=['activity', 'following_activities_standardization'])
+    # List for determinism preceding
     dp_list = []
+    # List for standardization preceding
+    sp_list = []
     for key in dp_dict:
         dp_list.append([key, True if len(dp_dict[key]) == 1 else False ])
+        sp_list.append([key, len(dp_dict[key])])
     dp_dataframe = pd.DataFrame(dp_list, columns=['activity', 'deterministic_preceding_activity'])
-
+    sp_dataframe = pd.DataFrame(sp_list, columns=['activity', 'preceding_activities_standardization'])
+    # Join Dataframes
     result_df = df.join(df_dataframe.set_index('activity'), on='activity')
     result_df = result_df.join(dp_dataframe.set_index('activity'), on='activity')
-    result_df['deterministic_next_activity'].fillna(False, inplace=True)
+    result_df = result_df.join(sf_dataframe.set_index('activity'), on='activity')
+    result_df = result_df.join(sp_dataframe.set_index('activity'), on='activity')
+    result_df['deterministic_following_activity'].fillna(False, inplace=True)
     result_df['deterministic_preceding_activity'].fillna(False, inplace=True)
+    result_df['following_activities_standardization'].fillna(0, inplace=True)
+    result_df['preceding_activities_standardization'].fillna(0, inplace=True)
     return result_df
 
 
 def extract_execution_frequency(df):
     relative_ef_df = df['activity'].value_counts(normalize=True).reset_index()
+    ef_df = df['activity'].value_counts().reset_index()
     relative_ef_df.columns = ['activity', 'ef_relative']
+    ef_df.columns = ['activity', 'ef']
     result_df = df.join(relative_ef_df.set_index('activity'), on='activity')
+    result_df = result_df.join(ef_df.set_index('activity'), on='activity')
     return result_df
 
 def extract_execution_time(df):
@@ -142,6 +179,10 @@ def extract_execution_time(df):
     median_et = df.groupby('activity')['duration_minutes'].median().reset_index()
     median_et.columns = ['activity', 'median_execution_time']
     result_df = df.join(median_et.set_index('activity'), on='activity')
+    #avg et
+    avg_et = df.groupby('activity')['duration_minutes'].mean().reset_index()
+    avg_et.columns = ['activity', 'avg_execution_time']
+    result_df = result_df.join(avg_et.set_index('activity'), on='activity')
     #relative et
     grouped_sum_et = df.groupby('activity')['duration_minutes'].sum().reset_index()
     sum_et = df['duration_minutes'].sum()
