@@ -44,7 +44,8 @@ def extract_activity_features(df, xes_log):
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
     df_w_actLabels_ITrelated_deterministic = extract_deterministic_standardization_feature(df_w_actLabels_ITrelated, xes_log)
     df_w_actLabels_ITrelated_deterministic_std_fr = extract_failure_rate(df_w_actLabels_ITrelated_deterministic, df)
-    return df_w_actLabels_ITrelated_deterministic_std_fr
+    df_w_actLabels_ITrelated_Deterministic_std_fr_nr = extract_number_resources(df_w_actLabels_ITrelated_deterministic_std_fr)
+    return df_w_actLabels_ITrelated_Deterministic_std_fr_nr
 
 
 def extract_activity_features_full_log(df):
@@ -55,6 +56,29 @@ def extract_activity_features_full_log(df):
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.lower())
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.replace("_", " "))
     return df_full_ef_et_stability
+
+
+def extract_number_resources(df):
+    action_bo_dict = {}
+    for index, row in df.iterrows():
+        key = str(row['action']+row['business object'])
+        if key in action_bo_dict:
+            action_bo_dict[key].append(row['executing resource'])
+        else:
+            value = [row['executing resource']]
+            kv = {key: value}
+            action_bo_dict.update(kv)
+
+    for key in action_bo_dict:
+        action_bo_dict[key] = list(set(action_bo_dict[key]))
+
+    number_resources_list = []
+    for index, row in df.iterrows():
+        key = row['action']+row['business object']
+        number_resources_list.append(len(action_bo_dict[key]))
+    df['number of resources'] = number_resources_list
+
+    return df
 
 
 def extract_stability(df):
