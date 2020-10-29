@@ -262,6 +262,25 @@ def extract_activity_labels(df):
 
     dict = {"activity": actvty, "business object": bo, "action": action, "executing resource": actor}
     result_df = pd.DataFrame(dict)
+    # Utilize attribute org:resource if exists
+    result_df = add_alternative_resource_attributes(df, result_df)
+    return result_df
+
+
+def add_alternative_resource_attributes(df, result_df):
+    temp_df = pd.merge(df, result_df[["activity", "executing resource"]], on="activity", how="left")
+    if 'org:resource' in temp_df:
+        gdf = temp_df.groupby('activity')['org:resource'].apply(lambda x: ','.join(x)).reset_index()
+        gdf['org:resource'] = gdf['org:resource'].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
+        result_df = result_df.join(gdf.set_index('activity'), on='activity')
+
+    # Utilize attribute org:role if exists
+    if 'org:resource' in temp_df:
+        gdf = temp_df.groupby('activity')['org:role'].apply(lambda x: ','.join(x)).reset_index()
+        gdf['org:role'] = gdf['org:role'].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
+        gdf['org:role'] = gdf['org:role'].apply(lambda x: x.lower())
+        gdf['org:role'] = gdf['org:role'].apply(lambda x: x.replace("_", " "))
+        result_df = result_df.join(gdf.set_index('activity'), on='activity')
     return result_df
 
 
