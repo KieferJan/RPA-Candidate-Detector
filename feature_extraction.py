@@ -2,9 +2,7 @@ import pandas as pd
 import bert_parser.main as bp
 import spacy
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
-
-ACTIVITY_COLUMN_NAME = 'concept:name'
-CASE_COLUMN_NAME = 'case:Rfp_id'
+import constants as c
 
 def join_full_in_distinct(full_df, distinct_df):
     # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
@@ -37,7 +35,7 @@ def join_full_in_distinct(full_df, distinct_df):
 
 
 def extract_activity_features(df, xes_log):
-    df.rename(columns={ACTIVITY_COLUMN_NAME: "activity"}, inplace=True)
+    df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
     df['activity'] = df['activity'].apply(lambda x: x.lower())
     df['activity'] = df['activity'].apply(lambda x: x.replace("_", " "))
     df_w_actLabels = extract_activity_labels(df)
@@ -49,7 +47,7 @@ def extract_activity_features(df, xes_log):
 
 
 def extract_activity_features_full_log(df):
-    df.rename(columns={ACTIVITY_COLUMN_NAME: "activity"}, inplace=True)
+    df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
     df_full_ef = extract_execution_frequency(df)
     df_full_ef_et = extract_execution_time(df_full_ef)
     df_full_ef_et_stability = extract_stability(df_full_ef_et)
@@ -96,7 +94,7 @@ def extract_stability(df):
 
 
 def extract_failure_rate(df, full_df):
-    df_act_trace_occurrence = full_df.groupby('activity')[CASE_COLUMN_NAME].nunique().reset_index()
+    df_act_trace_occurrence = full_df.groupby('activity')[c.TRACE_ATTRIBUTE_NAME].nunique().reset_index()
     df_act_trace_occurrence.columns = ['activity', 'trace_occurrence']
     df_act_count = full_df['activity'].value_counts().reset_index()
     df_act_count.columns = ['activity', 'activity_count']
@@ -187,8 +185,8 @@ def extract_execution_time(df):
     old_trace = ""
     old_time = ""
     for index, row in df.iterrows():
-        current_trace = row['case:Rfp_id']
-        current_time = row['time:timestamp']
+        current_trace = row[c.TRACE_ATTRIBUTE_NAME]
+        current_time = row[c.TIMESTAMP_ATTRIBUTE_NAME]
 
         if current_trace != old_trace:
             # Start a new trace -> first activity has no duration
@@ -278,17 +276,17 @@ def extract_activity_labels(df):
 
 def add_alternative_resource_attributes(df, result_df):
     temp_df = pd.merge(df, result_df[["activity", "executing resource"]], on="activity", how="left")
-    if 'org:resource' in temp_df:
-        gdf = temp_df.groupby('activity')['org:resource'].apply(lambda x: ','.join(x)).reset_index()
-        gdf['org:resource'] = gdf['org:resource'].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
+    if c.ORG_RESOURCE_ATTRIBUTE_NAME in temp_df:
+        gdf = temp_df.groupby('activity')[c.ORG_RESOURCE_ATTRIBUTE_NAME].apply(lambda x: ','.join(x)).reset_index()
+        gdf[c.ORG_RESOURCE_ATTRIBUTE_NAME] = gdf[c.ORG_RESOURCE_ATTRIBUTE_NAME].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
         result_df = result_df.join(gdf.set_index('activity'), on='activity')
 
     # Utilize attribute org:role if exists
-    if 'org:resource' in temp_df:
-        gdf = temp_df.groupby('activity')['org:role'].apply(lambda x: ','.join(x)).reset_index()
-        gdf['org:role'] = gdf['org:role'].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
-        gdf['org:role'] = gdf['org:role'].apply(lambda x: x.lower())
-        gdf['org:role'] = gdf['org:role'].apply(lambda x: x.replace("_", " "))
+    if c.ORG_ROLE_ATTRIBUTE_NAME in temp_df:
+        gdf = temp_df.groupby('activity')[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ','.join(x)).reset_index()
+        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
+        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: x.lower())
+        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: x.replace("_", " "))
         result_df = result_df.join(gdf.set_index('activity'), on='activity')
     return result_df
 

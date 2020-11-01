@@ -1,0 +1,6 @@
+FILE_NAME = 'a-RequestForPayment'
+TRACE_ATTRIBUTE_NAME = 'case:Rfp_id'
+ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
+TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'
+ORG_RESOURCE_ATTRIBUTE_NAME = 'org:resource'
+ORG_ROLE_ATTRIBUTE_NAME = 'org:role'
