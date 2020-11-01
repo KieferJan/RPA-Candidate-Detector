@@ -39,6 +39,7 @@ def extract_activity_features(df, xes_log):
     df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
     df['activity'] = df['activity'].apply(lambda x: x.lower())
     df['activity'] = df['activity'].apply(lambda x: x.replace("_", " "))
+    df['activity'] = df['activity'].apply(lambda x: x.replace("-", " "))
     df_w_actLabels = extract_activity_labels(df)
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
     df_w_actLabels_ITrelated_deterministic = extract_deterministic_standardization_feature(df_w_actLabels_ITrelated, xes_log)
@@ -54,6 +55,7 @@ def extract_activity_features_full_log(df):
     df_full_ef_et_stability = extract_stability(df_full_ef_et)
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.lower())
     df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.replace("_", " "))
+    df_full_ef_et['activity'] = df_full_ef_et['activity'].apply(lambda x: x.replace("-", " "))
     return df_full_ef_et_stability
 
 
