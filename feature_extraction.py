@@ -246,18 +246,27 @@ def extract_activity_labels(df):
         # iterate through all words of an activity and identify the BO, A, Actor values and create a separate list for
         # each tag
         bo_values = []
-        for b in bo_indexes:
-            bo_values.append(activity_list_words[b])
+        if bo_indexes:
+            for b in bo_indexes:
+                bo_values.append(activity_list_words[b])
+        else:
+            bo_values.append('missing')
         bo.append(" ".join(bo_values))
 
         a_values = []
-        for a in a_indexes:
-            a_values.append(activity_list_words[a])
+        if a_indexes:
+            for a in a_indexes:
+                a_values.append(activity_list_words[a])
+        else:
+            a_values.append('missing')
         action.append(" ".join(a_values))
 
         actor_values = []
-        for ac in actor_indexes:
-            actor_values.append(activity_list_words[ac])
+        if actor_indexes:
+            for ac in actor_indexes:
+                actor_values.append(activity_list_words[ac])
+        else:
+            actor_values.append('missing')
         actor.append(" ".join(actor_values))
 
     dict = {"activity": actvty, "business object": bo, "action": action, "executing resource": actor}
