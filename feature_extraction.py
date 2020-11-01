@@ -96,7 +96,10 @@ def extract_stability(df):
     list_stability = []
     # for each activity compute the stability by using a normalized variance
     for index, row in result_df.iterrows():
-        list_stability.append(row['standard_deviation_duration'] ** 2 / (row['ef'] * row['avg_execution_time']))
+        if row['avg_execution_time'] != 0:
+            list_stability.append(row['standard_deviation_duration'] ** 2 / (row['ef'] * row['avg_execution_time']))
+        else:
+            list_stability.append(row['standard_deviation_duration'] ** 2 / (row['ef']))
     result_df['stability'] = list_stability
     return result_df
 
@@ -122,6 +125,7 @@ def extract_deterministic_standardization_feature(df, log):
     fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG)
     # Footprint DF from PM4PY
     directly_follows = fp_log['sequence']
+    print(directly_follows)
     # dict for following activity
     df_dict = {}
     # dict for preceding activity
@@ -380,7 +384,10 @@ def extract_IT_relatedness(df):
             for it_token in it_tokens:
                 if activity_token.has_vector and it_token.has_vector:
                     similarity_dict[activity_token.text + it_token.text] = activity_token.similarity(it_token)
-        max_similarities.append(max(similarity_dict.values()))
+        if similarity_dict:
+            max_similarities.append(max(similarity_dict.values()))
+        else:
+            max_similarities.append(0)
 
     df['IT_relatedness'] = max_similarities
     return df

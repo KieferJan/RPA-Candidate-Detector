@@ -1,6 +1,6 @@
-FILE_NAME = 'a-BPI_Challenge_2013_closed_problems'
+FILE_NAME = 'BPIC15_2'
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
-ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
+ACTIVITY_ATTRIBUTE_NAME = 'activityNameEN'
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'
 ORG_RESOURCE_ATTRIBUTE_NAME = 'org:resource'
 ORG_ROLE_ATTRIBUTE_NAME = 'org:role'
