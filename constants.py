@@ -1,4 +1,4 @@
-FILE_NAME = 'a-RequestForPayment'
+FILE_NAME = 'a-BPI_Challenge_2013_closed_problems'
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
 ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'

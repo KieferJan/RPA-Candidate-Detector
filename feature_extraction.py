@@ -83,7 +83,7 @@ def extract_number_resources(df):
     for index, row in df.iterrows():
         key = row['action']+row['business object']
         number_resources_list.append(len(action_bo_dict[key]))
-    df['number of resources'] = number_resources_list
+    df['number_of_resources'] = number_resources_list
 
     return df
 
@@ -246,7 +246,7 @@ def extract_activity_labels(df):
         for tag in tagged_events[activity]:
             if tag == "BO":
                 bo_indexes.append(i)
-            elif tag == "A":
+            elif tag == "A" or tag == "STATE":
                 a_indexes.append(i)
             elif tag == "ACTOR":
                 actor_indexes.append(i)
@@ -297,6 +297,7 @@ def add_alternative_resource_attributes(df, result_df):
 
     # Utilize attribute org:role if exists
     if c.ORG_ROLE_ATTRIBUTE_NAME in temp_df:
+        temp_df[c.ORG_ROLE_ATTRIBUTE_NAME] = temp_df[c.ORG_ROLE_ATTRIBUTE_NAME].astype(str)
         gdf = temp_df.groupby('activity')[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ','.join(x)).reset_index()
         gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
         gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: x.lower())
@@ -381,7 +382,7 @@ def extract_IT_relatedness(df):
                     similarity_dict[activity_token.text + it_token.text] = activity_token.similarity(it_token)
         max_similarities.append(max(similarity_dict.values()))
 
-    df['IT relatedness'] = max_similarities
+    df['IT_relatedness'] = max_similarities
     return df
 
 
