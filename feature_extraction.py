@@ -1,6 +1,7 @@
 import pandas as pd
 import bert_parser.main as bp
 import spacy
+from pandas.api.types import is_string_dtype
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
 import constants as c
 
@@ -61,9 +62,15 @@ def extract_number_resources(df):
     for index, row in df.iterrows():
         key = str(row['action']+row['business object'])
         if key in action_bo_dict:
-            action_bo_dict[key].append(row['executing resource'])
+            if row['executing resource'] != 'missing':
+                action_bo_dict[key].append(row['executing resource'])
+            else:
+                action_bo_dict[key] = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
         else:
-            value = [row['executing resource']]
+            if row['executing resource'] != 'missing':
+                value = [row['executing resource']]
+            else:
+                value = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
             kv = {key: value}
             action_bo_dict.update(kv)
 
@@ -89,7 +96,6 @@ def extract_stability(df):
     for index, row in result_df.iterrows():
         list_stability.append(row['standard_deviation_duration'] ** 2 / (row['ef'] * row['avg_execution_time']))
     result_df['stability'] = list_stability
-    result_df['stability'].fillna(0, inplace=True)
     return result_df
 
 
@@ -197,14 +203,17 @@ def extract_execution_time(df):
         old_trace = current_trace
         old_time = current_time
     df['duration_minutes'] = duration
+    df['duration_minutes'].fillna(-1, inplace=True)
     #median et
     median_et = df.groupby('activity')['duration_minutes'].median().reset_index()
     median_et.columns = ['activity', 'median_execution_time']
     result_df = df.join(median_et.set_index('activity'), on='activity')
+    result_df['median_execution_time'].fillna(-1, inplace=True)
     #avg et
     avg_et = df.groupby('activity')['duration_minutes'].mean().reset_index()
     avg_et.columns = ['activity', 'avg_execution_time']
     result_df = result_df.join(avg_et.set_index('activity'), on='activity')
+    result_df['avg_execution_time'].fillna(-1, inplace=True)
     #relative et
     grouped_sum_et = df.groupby('activity')['duration_minutes'].sum().reset_index()
     sum_et = df['duration_minutes'].sum()
@@ -214,6 +223,7 @@ def extract_execution_time(df):
     for index, row in result_df.iterrows():
         relative_durations.append(row['sum_execution_time'] / sum_et)
     result_df['et_relative'] = relative_durations
+    result_df['et_relative'].fillna(-1, inplace=True)
     return result_df
 
 def extract_activity_labels(df):
@@ -262,7 +272,7 @@ def extract_activity_labels(df):
         actor_values = []
         if actor_indexes:
             for ac in actor_indexes:
-                actor_values.append(activity_list_words[ac])
+                actor_values.append(str(activity_list_words[ac]))
         else:
             actor_values.append('missing')
         actor.append(" ".join(actor_values))
@@ -277,9 +287,11 @@ def extract_activity_labels(df):
 def add_alternative_resource_attributes(df, result_df):
     temp_df = pd.merge(df, result_df[["activity", "executing resource"]], on="activity", how="left")
     if c.ORG_RESOURCE_ATTRIBUTE_NAME in temp_df:
+        temp_df[c.ORG_RESOURCE_ATTRIBUTE_NAME] = temp_df[c.ORG_RESOURCE_ATTRIBUTE_NAME].astype(str)
         gdf = temp_df.groupby('activity')[c.ORG_RESOURCE_ATTRIBUTE_NAME].apply(lambda x: ','.join(x)).reset_index()
         gdf[c.ORG_RESOURCE_ATTRIBUTE_NAME] = gdf[c.ORG_RESOURCE_ATTRIBUTE_NAME].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
         result_df = result_df.join(gdf.set_index('activity'), on='activity')
+        result_df[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
 
     # Utilize attribute org:role if exists
     if c.ORG_ROLE_ATTRIBUTE_NAME in temp_df:
