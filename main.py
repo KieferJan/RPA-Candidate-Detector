@@ -3,6 +3,8 @@ from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.log.importer.xes import importer as xes_importer
 import feature_extraction as fe
 import constants as c
+from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
+from pm4py.util import constants
 xes_log = ""
 
 
@@ -11,8 +13,9 @@ def import_xes():
     pd.set_option('display.max_columns', None)
     pd.options.display.width = None
     global xes_log
-    xes_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME))
-    df = log_converter.apply(xes_log, variant=log_converter.Variants.TO_DATA_FRAME)
+    parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
+    xes_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
+    df = log_converter.apply(xes_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
     attribute_list_copy = c.ATTRIBUTE_LIST
     for attribute in attribute_list_copy:
         if attribute not in df.columns:

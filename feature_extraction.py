@@ -1,8 +1,8 @@
 import pandas as pd
 import bert_parser.main as bp
 import spacy
-from pandas.api.types import is_string_dtype
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
+from pm4py.util import constants
 import constants as c
 
 def join_full_in_distinct(full_df, distinct_df):
@@ -122,7 +122,8 @@ def extract_failure_rate(df, full_df):
 
 
 def extract_deterministic_standardization_feature(df, log):
-    fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG)
+    parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
+    fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG, parameters=parameters)
     # Footprint DF from PM4PY
     directly_follows = fp_log['sequence']
     print(directly_follows)
