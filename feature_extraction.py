@@ -126,7 +126,6 @@ def extract_deterministic_standardization_feature(df, log):
     fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG, parameters=parameters)
     # Footprint DF from PM4PY
     directly_follows = fp_log['sequence']
-    print(directly_follows)
     # dict for following activity
     df_dict = {}
     # dict for preceding activity
