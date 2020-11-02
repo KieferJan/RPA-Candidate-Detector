@@ -9,13 +9,13 @@ xes_log = ""
 
 
 def import_xes():
-
     pd.set_option('display.max_columns', None)
     pd.options.display.width = None
     global xes_log
     parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
     xes_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
     df = log_converter.apply(xes_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
+    print(df)
     attribute_list_copy = c.ATTRIBUTE_LIST
     for attribute in attribute_list_copy:
         if attribute not in df.columns:
@@ -30,8 +30,7 @@ if __name__ == '__main__':
     distinct_activity_features_df = fe.extract_activity_features(default_df, xes_log)
     full_activity_features_df = fe.extract_activity_features_full_log(default_df)
 
-    # join the two different types of data frames (full trace into distinct activities AND
-    # distinct activities into full trace)
+    # join the two data frames (full trace into unique activities)
     activity_df = fe.join_full_in_distinct(full_activity_features_df, distinct_activity_features_df)
 
     print(activity_df)
