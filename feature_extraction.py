@@ -4,6 +4,7 @@ import spacy
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
 from pm4py.util import constants
 import constants as c
+import re
 
 def join_full_in_distinct(full_df, distinct_df):
     # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
@@ -43,6 +44,9 @@ def replace_special_characters(series):
     series = series.apply(lambda x: x.replace(")", ""))
     series = series.apply(lambda x: x.replace(":", ""))
     series = series.apply(lambda x: x.replace(".", ""))
+    series = series.apply(lambda x: re.sub('[0-9]', '', x))
+    series = series.apply(lambda x: x.replace("  ", " "))
+    series = series.apply(lambda x: x[:-1] if x[-1] == " " else x)
 
     return series
 
