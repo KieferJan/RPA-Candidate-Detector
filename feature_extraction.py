@@ -70,17 +70,23 @@ def extract_activity_features_full_log(df):
 def extract_number_resources(df):
     action_bo_dict = {}
     for index, row in df.iterrows():
-        key = str(row['action']+row['business object'])
+        key = str(row['action'] + row['business object'])
         if key in action_bo_dict:
             if row['executing resource'] != 'missing':
                 action_bo_dict[key].append(row['executing resource'])
             else:
-                action_bo_dict[key] = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
+                if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
+                    action_bo_dict[key] = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
+                else:
+                    action_bo_dict[key].append(0)
         else:
             if row['executing resource'] != 'missing':
                 value = [row['executing resource']]
             else:
-                value = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
+                if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
+                    value = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
+                else:
+                    value = [0]
             kv = {key: value}
             action_bo_dict.update(kv)
 
@@ -89,8 +95,11 @@ def extract_number_resources(df):
 
     number_resources_list = []
     for index, row in df.iterrows():
-        key = row['action']+row['business object']
+        key = row['action'] + row['business object']
         number_resources_list.append(len(action_bo_dict[key]))
+    df['number_of_resources'] = number_resources_list
+
+    number_resources_list = [0] * df.shape[0]
     df['number_of_resources'] = number_resources_list
 
     return df
