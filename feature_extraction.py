@@ -3,11 +3,57 @@ import bert_parser.main as bp
 import spacy
 from pm4py.algo.discovery.footprints import algorithm as footprints_discovery
 from pm4py.util import constants
+from pm4py.objects.conversion.log import converter as log_converter
+from pm4py.objects.log.importer.xes import importer as xes_importer
+from pm4py.objects.log.util import dataframe_utils
 import constants as c
 import re
 
+event_log = ""
+
+def import_data():
+    if c.DATATYPE == 'XES':
+        default_df = import_xes()
+    elif c.DATATYPE == 'CSV':
+        default_df = import_csv()
+    return default_df
+
+
+def import_xes():
+        pd.set_option('display.max_columns', None)
+        pd.options.display.width = None
+        global event_log
+        parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
+        event_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
+        df = log_converter.apply(event_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
+        attribute_list_copy = []
+        for attribute in c.ATTRIBUTE_LIST:
+            if attribute in df.columns:
+                attribute_list_copy.append(attribute)
+        if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
+            df[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
+        return df[attribute_list_copy]
+
+
+def import_csv():
+    pd.set_option('display.max_columns', None)
+    pd.options.display.width = None
+    log_csv = pd.read_csv('event logs/{}.csv'.format(c.FILE_NAME), sep=c.SEPARATOR)
+    log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
+    log_csv = log_csv.sort_values(by=[c.TRACE_ATTRIBUTE_NAME, c.TIMESTAMP_ATTRIBUTE_NAME])
+    attribute_list_copy = []
+    for attribute in c.ATTRIBUTE_LIST:
+        if attribute in log_csv.columns:
+            attribute_list_copy.append(attribute)
+    if c.ORG_RESOURCE_ATTRIBUTE_NAME in log_csv:
+        log_csv[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
+    global event_log
+    event_log = log_converter.apply(log_csv)
+    return log_csv
+
+
 def join_full_in_distinct(full_df, distinct_df):
-    # join the aggregated coulms "execution frequency", "median_execution_time" from the trace dataframe into the
+    # join the aggregated columns "execution frequency", "median_execution_time" from the trace dataframe into the
     # dataframe with distinct activities
     # group the data frame that contains data from all traces
     full_grouped_ef = full_df.groupby('activity')['ef_relative'].mean().reset_index()
@@ -46,17 +92,19 @@ def replace_special_characters(series):
     series = series.apply(lambda x: x.replace(".", ""))
     series = series.apply(lambda x: re.sub('[0-9]', '', x))
     series = series.apply(lambda x: x.replace("  ", " "))
+    series = series.apply(lambda x: x.replace("/", " "))
     series = series.apply(lambda x: x[:-1] if x[-1] == " " else x)
 
     return series
 
 
-def extract_activity_features(df, xes_log):
+def extract_activity_features(df):
+    global event_log
     df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
     df['activity'] = replace_special_characters(df['activity'])
     df_w_actLabels = extract_activity_labels(df)
     df_w_actLabels_ITrelated = extract_IT_relatedness(df_w_actLabels)
-    df_w_actLabels_ITrelated_deterministic = extract_deterministic_standardization_feature(df_w_actLabels_ITrelated, xes_log)
+    df_w_actLabels_ITrelated_deterministic = extract_deterministic_standardization_feature(df_w_actLabels_ITrelated, event_log)
     df_w_actLabels_ITrelated_deterministic_std_fr = extract_failure_rate(df_w_actLabels_ITrelated_deterministic, df)
     df_w_actLabels_ITrelated_Deterministic_std_fr_nr = extract_number_resources(df_w_actLabels_ITrelated_deterministic_std_fr)
     return df_w_actLabels_ITrelated_Deterministic_std_fr_nr
