@@ -77,16 +77,15 @@ def extract_number_resources(df):
             else:
                 if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
                     action_bo_dict[key] = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
-                else:
-                    action_bo_dict[key].append(0)
+
         else:
             if row['executing resource'] != 'missing':
                 value = [row['executing resource']]
             else:
-                if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
+                if c.ORG_RESOURCE_ATTRIBUTE_NAME in df and row[c.ORG_RESOURCE_ATTRIBUTE_NAME] != 'missing':
                     value = row[c.ORG_RESOURCE_ATTRIBUTE_NAME].split(',')
                 else:
-                    value = [0]
+                    value = []
             kv = {key: value}
             action_bo_dict.update(kv)
 
@@ -97,9 +96,6 @@ def extract_number_resources(df):
     for index, row in df.iterrows():
         key = row['action'] + row['business object']
         number_resources_list.append(len(action_bo_dict[key]))
-    df['number_of_resources'] = number_resources_list
-
-    number_resources_list = [0] * df.shape[0]
     df['number_of_resources'] = number_resources_list
 
     return df
