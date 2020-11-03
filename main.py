@@ -16,11 +16,12 @@ def import_xes():
     xes_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
     df = log_converter.apply(xes_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
     print(df)
-    attribute_list_copy = c.ATTRIBUTE_LIST
-    for attribute in attribute_list_copy:
-        if attribute not in df.columns:
-            attribute_list_copy.remove(attribute)
-    df[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
+    attribute_list_copy = []
+    for attribute in c.ATTRIBUTE_LIST:
+        if attribute in df.columns:
+            attribute_list_copy.append(attribute)
+    if c.ORG_RESOURCE_ATTRIBUTE_NAME in df:
+        df[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
     return df[attribute_list_copy]
 
 
