@@ -1,4 +1,4 @@
-FILE_NAME = 'BPI_Challenge_2012'
+FILE_NAME = 'CreditRequirement'
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
 ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'
