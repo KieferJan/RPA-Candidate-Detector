@@ -10,6 +10,7 @@ import constants as c
 import re
 
 event_log = ""
+activity_automation_dict = {}
 
 def import_data():
     if c.DATATYPE == 'XES':
@@ -26,6 +27,7 @@ def import_xes():
         parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
         event_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
         df = log_converter.apply(event_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
+        print(df)
         attribute_list_copy = []
         for attribute in c.ATTRIBUTE_LIST:
             if attribute in df.columns:
@@ -60,17 +62,22 @@ def join_full_in_distinct(full_df, distinct_df):
     full_grouped_et = full_df.groupby('activity')['median_execution_time'].median().reset_index()
     full_grouped_rel_et = full_df.groupby('activity')['et_relative'].median().reset_index()
     full_grouped_stability = full_df.groupby('activity')['stability'].mean().reset_index()
+    full_grouped_automation = full_df.groupby('activity')[c.CLASS_LABEL].apply(lambda x: ','.join(x)).reset_index()
+
+
     # PREPROCCES the data frame
     # set column header
     full_grouped_et.columns = ['activity', 'median_execution_time']
     full_grouped_ef.columns = ['activity', 'ef_relative']
     full_grouped_rel_et.columns = ['activity', 'et_relative']
     full_grouped_stability.columns = ['activity', 'stability']
+    full_grouped_automation[c.CLASS_LABEL] = full_grouped_automation[c.CLASS_LABEL].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
 
     result_df = distinct_df.join(full_grouped_ef.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_rel_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_stability.set_index('activity'), on='activity')
+    result_df = result_df.join(full_grouped_automation.set_index('activity'), on='activity')
 
     return result_df
 
@@ -115,8 +122,44 @@ def extract_activity_features_full_log(df):
     df_full_ef = extract_execution_frequency(df)
     df_full_ef_et = extract_execution_time(df_full_ef)
     df_full_ef_et_stability = extract_stability(df_full_ef_et)
-    df_full_ef_et_stability['activity'] = replace_special_characters(df_full_ef_et_stability['activity'])
-    return df_full_ef_et_stability
+    df_full_ef_et_stability_automation = match_automation(df_full_ef_et_stability)
+    df_full_ef_et_stability_automation['activity'] = replace_special_characters(df_full_ef_et_stability_automation['activity'])
+    return df_full_ef_et_stability_automation
+
+
+def match_automation(df):
+    for key in activity_automation_dict:
+        if len(activity_automation_dict[key]) == 1 and activity_automation_dict[key][0] == True:
+            activity_automation_dict[key] = True
+        else:
+            activity_automation_dict[key] = False
+
+    automation_list = []
+    for index, row in df.iterrows():
+        if row['activity'] in activity_automation_dict:
+           automation_list.append('Automated' if activity_automation_dict[row['activity']] else '')
+        else:
+            automation_list.append('')
+    df[c.CLASS_LABEL] = automation_list
+
+    return df
+
+
+def extract_automation(old_trace, old_time, current_trace, current_time, row):
+    global activity_automation_dict
+    isAutomated = old_time == current_time
+
+    if row['activity'] not in activity_automation_dict:
+        if current_trace == old_trace:
+            value = [isAutomated]
+            key = row['activity']
+            activity_automation_dict.update({key: value})
+    else:
+        if current_trace == old_trace:
+            value = activity_automation_dict.get(row['activity'])
+            value.append(isAutomated)
+            kv = {row['activity']: list(set(value))}
+            activity_automation_dict.update(kv)
 
 
 def extract_number_resources(df):
@@ -149,7 +192,9 @@ def extract_number_resources(df):
         key = row['action'] + row['business object']
         number_resources_list.append(len(action_bo_dict[key]))
     df['number_of_resources'] = number_resources_list
-
+    # Remove obsolete columns
+    if c.ORG_RESOURCE_ATTRIBUTE_NAME in df.columns:
+        df.drop(columns=c.ORG_RESOURCE_ATTRIBUTE_NAME, inplace=True)
     return df
 
 
@@ -264,6 +309,7 @@ def extract_execution_time(df):
     for index, row in df.iterrows():
         current_trace = row[c.TRACE_ATTRIBUTE_NAME]
         current_time = row[c.TIMESTAMP_ATTRIBUTE_NAME]
+        extract_automation(old_trace, old_time, current_trace, current_time, row)
 
         if current_trace != old_trace:
             # Start a new trace -> first activity has no duration
@@ -364,14 +410,6 @@ def add_alternative_resource_attributes(df, result_df):
         result_df = result_df.join(gdf.set_index('activity'), on='activity')
         result_df[c.ORG_RESOURCE_ATTRIBUTE_NAME].fillna('missing', inplace=True)
 
-    # Utilize attribute org:role if exists
-    if c.ORG_ROLE_ATTRIBUTE_NAME in temp_df:
-        temp_df[c.ORG_ROLE_ATTRIBUTE_NAME] = temp_df[c.ORG_ROLE_ATTRIBUTE_NAME].astype(str)
-        gdf = temp_df.groupby('activity')[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ','.join(x)).reset_index()
-        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
-        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: x.lower())
-        gdf[c.ORG_ROLE_ATTRIBUTE_NAME] = gdf[c.ORG_ROLE_ATTRIBUTE_NAME].apply(lambda x: x.replace("_", " "))
-        result_df = result_df.join(gdf.set_index('activity'), on='activity')
     return result_df
 
 
