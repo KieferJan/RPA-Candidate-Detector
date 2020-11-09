@@ -145,21 +145,34 @@ def match_automation(df):
     return df
 
 
-def extract_automation(old_trace, old_time, current_trace, current_time, row):
+def extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity):
     global activity_automation_dict
     isAutomated = old_time == current_time
 
     if row['activity'] not in activity_automation_dict:
         if current_trace == old_trace:
-            value = [isAutomated]
-            key = row['activity']
-            activity_automation_dict.update({key: value})
+            if c.TIMESTAMP_MODE != 'START_AND_END':
+                value = [isAutomated]
+                key = row['activity']
+                activity_automation_dict.update({key: value})
+            else:
+                if old_activity == row['activity']:
+                    value = [isAutomated]
+                    key = row['activity']
+                    activity_automation_dict.update({key: value})
     else:
         if current_trace == old_trace:
-            value = activity_automation_dict.get(row['activity'])
-            value.append(isAutomated)
-            kv = {row['activity']: list(set(value))}
-            activity_automation_dict.update(kv)
+            if c.TIMESTAMP_MODE != 'START_AND_END':
+                value = activity_automation_dict.get(row['activity'])
+                value.append(isAutomated)
+                kv = {row['activity']: list(set(value))}
+                activity_automation_dict.update(kv)
+            else:
+                if old_activity == row['activity']:
+                    value = activity_automation_dict.get(row['activity'])
+                    value.append(isAutomated)
+                    kv = {row['activity']: list(set(value))}
+                    activity_automation_dict.update(kv)
 
 
 def extract_number_resources(df):
@@ -307,11 +320,12 @@ def extract_execution_time(df):
     duration = []
     old_trace = ""
     old_time = ""
+    old_activity = ""
     for index, row in df.iterrows():
         current_trace = row[c.TRACE_ATTRIBUTE_NAME]
         current_time = row[c.TIMESTAMP_ATTRIBUTE_NAME]
         if c.MODE == 'PREPARATION':
-            extract_automation(old_trace, old_time, current_trace, current_time, row)
+            extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity)
 
         if current_trace != old_trace:
             # Start a new trace -> first activity has no duration
@@ -321,6 +335,7 @@ def extract_execution_time(df):
             duration.append(dur)
         old_trace = current_trace
         old_time = current_time
+        old_activity = row['activity']
     df['duration_minutes'] = duration
     df['duration_minutes'].fillna(-1, inplace=True)
     #median et

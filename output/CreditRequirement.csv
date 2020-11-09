@@ -1,9 +1,9 @@
 activity,business object,action,executing resource,IT_relatedness,deterministic_following_activity,deterministic_preceding_activity,following_activities_standardization,preceding_activities_standardization,failure_rate,number_of_resources,ef_relative,median_execution_time,et_relative,stability,task_type
-register,missing,register,missing,0.5742507576942444,True,False,1.0,0.0,1.0,1,0.07692307692307693,-1.0,-0.002577585318074028,,
-acceptance of requests,of requests,acceptance,missing,0.5835991501808167,True,True,1.0,1.0,1.0,1,0.07692307692307693,0.0,0.0,,Automated
-collection of documents,of documents,collection,missing,0.8579996824264526,True,True,1.0,1.0,2.0,1,0.15384615384615385,53.5,0.27580162903392097,23.662362616822428,
-completeness check,completeness,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.15384615384615385,38.635,0.19917001752758012,38.635000000000005,
-credit worthiness check,credit worthiness,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.15384615384615385,47.515,0.2449479327765749,47.515,
-collateral check,collateral,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.15384615384615385,27.74,0.14300443344674707,27.740000000000002,
-credit committee,credit committee,missing,missing,0.5858592391014099,True,True,1.0,1.0,2.0,1,0.15384615384615385,27.09,0.13965357253325084,27.089999999999996,
-requirements review,requirements,review,missing,0.5730544924736023,False,True,0.0,1.0,1.0,1,0.07692307692307693,0.0,0.0,,Automated
+register,missing,register,missing,0.5742507576942444,True,False,1.0,0.0,1.0,1,0.06666666666666667,-1.0,-0.0025775853180740283,,
+acceptance of requests,of requests,acceptance,missing,0.5835991501808167,True,True,1.0,1.0,2.0,1,0.13333333333333333,8.96,0.04619032889988659,8.96,
+collection of documents,of documents,collection,missing,0.8579996824264526,True,True,1.0,1.0,2.0,1,0.13333333333333333,0.0,0.0,0.0,Automated
+completeness check,completeness,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.13333333333333333,83.175,0.4287813176616146,0.4192248271716263,
+credit worthiness check,credit worthiness,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.13333333333333333,47.515,0.24494793277657492,47.515,
+collateral check,collateral,check,missing,0.7834091782569885,True,True,1.0,1.0,2.0,1,0.13333333333333333,27.74,0.1430044334467471,27.740000000000002,
+credit committee,credit committee,missing,missing,0.5858592391014099,True,True,1.0,1.0,2.0,1,0.13333333333333333,21.05,0.10851634189091659,21.050000000000004,
+requirements review,requirements,review,missing,0.5730544924736023,False,True,0.0,1.0,2.0,1,0.13333333333333333,6.04,0.031137230642334264,6.039999999999999,
