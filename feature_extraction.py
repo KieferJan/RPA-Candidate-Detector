@@ -302,6 +302,7 @@ def extract_execution_frequency(df):
     result_df = result_df.join(ef_df.set_index('activity'), on='activity')
     return result_df
 
+
 def extract_execution_time(df):
     duration = []
     old_trace = ""
@@ -309,7 +310,8 @@ def extract_execution_time(df):
     for index, row in df.iterrows():
         current_trace = row[c.TRACE_ATTRIBUTE_NAME]
         current_time = row[c.TIMESTAMP_ATTRIBUTE_NAME]
-        extract_automation(old_trace, old_time, current_trace, current_time, row)
+        if c.MODE == 'PREPARATION':
+            extract_automation(old_trace, old_time, current_trace, current_time, row)
 
         if current_trace != old_trace:
             # Start a new trace -> first activity has no duration
@@ -342,6 +344,7 @@ def extract_execution_time(df):
     result_df['et_relative'] = relative_durations
     result_df['et_relative'].fillna(-1, inplace=True)
     return result_df
+
 
 def extract_activity_labels(df):
     events = df['activity']
