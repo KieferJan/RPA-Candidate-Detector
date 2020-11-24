@@ -3,7 +3,7 @@ import pandas as pd
 import feature_extraction as fe
 import constants as c
 from pm4py.util import constants
-import bert_automation_indication as AutomationIndication
+import bert_automation_indication.activity_bert_parser as AutomationIndication
 
 
 # Press the green button in the gutter to run the script.

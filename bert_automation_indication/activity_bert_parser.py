@@ -19,8 +19,8 @@ text_columns = ['business object'] #, 'business object', 'action']
 
 def apply_bert(df):
     do_train = False
-    do_test = True
-    do_predict = False
+    do_test = False
+    do_predict = True
     original_df = df.copy()
     for col in text_columns:
         prep_df, label_dict = preprocess(df, col)
@@ -30,8 +30,9 @@ def apply_bert(df):
             dataloader_validation = train(prep_df, col, label_dict, False)
             test(label_dict, dataloader_validation, col)
         if do_predict:
+            prep_df = prep_df.drop_duplicates(subset=[col])
             result_df = predict(col, prep_df)
-            original_df = original_df.join(result_df)
+            original_df = original_df.join(result_df.set_index(col), on=col)
             original_df.to_csv(f'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/'
                                f'bert_automation_indication/Output/full_{col}.csv', index=False)
 
@@ -309,5 +310,6 @@ def predict(col, df):
 
     preds = torch.cat(preds, 0)
     result_df = pd.DataFrame(preds, columns=headers).astype("float")
+    result_df[col] = df[col]
 
     return result_df
