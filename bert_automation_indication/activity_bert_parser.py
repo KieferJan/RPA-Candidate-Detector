@@ -19,18 +19,16 @@ text_columns = ['business object'] #, 'business object', 'action']
 
 def apply_bert(df):
     do_train = False
-    do_test = False
     do_predict = True
     original_df = df.copy()
     for col in text_columns:
         prep_df, label_dict = preprocess(df, col)
+        prep_df = prep_df.drop_duplicates(subset=[col])
         if do_train:
             dataloader_validation = train(prep_df, col, label_dict, True)
-        if do_test:
-            dataloader_validation = train(prep_df, col, label_dict, False)
             test(label_dict, dataloader_validation, col)
         if do_predict:
-            prep_df = prep_df.drop_duplicates(subset=[col])
+            # prep_df = prep_df.drop_duplicates(subset=[col])
             result_df = predict(col, prep_df)
             original_df = original_df.join(result_df.set_index(col), on=col)
             original_df.to_csv(f'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/'
@@ -127,52 +125,52 @@ def train(df, col, label_dict, do_train):
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                                 num_warmup_steps=0,
                                                 num_training_steps=len(dataloader_train) * epochs)
-    if do_train:
-        for epoch in range(1, epochs + 1):
 
-            model.train()
+    for epoch in range(1, epochs + 1):
 
-            loss_train_total = 0
+        model.train()
 
-            # progress_bar = tqdm(dataloader_train, desc='Epoch {:1d}'.format(epoch), leave=False, disable=False)
-            for batch in dataloader_train:
-                model.zero_grad()
+        loss_train_total = 0
 
-                # batch = tuple(b.to(device) for b in batch)
+        # progress_bar = tqdm(dataloader_train, desc='Epoch {:1d}'.format(epoch), leave=False, disable=False)
+        for batch in dataloader_train:
+            model.zero_grad()
 
-                inputs = {'input_ids': batch[0],
-                          'attention_mask': batch[1],
-                          'labels': batch[2],
-                          }
+            # batch = tuple(b.to(device) for b in batch)
 
-                outputs = model(**inputs)
+            inputs = {'input_ids': batch[0],
+                      'attention_mask': batch[1],
+                      'labels': batch[2],
+                      }
 
-                loss = outputs[0]
-                loss_train_total += loss.item()
-                loss.backward()
+            outputs = model(**inputs)
 
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            loss = outputs[0]
+            loss_train_total += loss.item()
+            loss.backward()
 
-                optimizer.step()
-                scheduler.step()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
-                # progress_bar.set_postfix({'training_loss': '{:.3f}'.format(loss.item() / len(batch))})
-            torch.save(model.state_dict(), f'bert_automation_indication/Model/{col}/finetuned_BERT_epoch_{epoch}.model')
+            optimizer.step()
+            scheduler.step()
 
-            # tqdm.write(f'\nEpoch {epoch}')
-            print(f'\n Train Epoch: {epoch}')
+            # progress_bar.set_postfix({'training_loss': '{:.3f}'.format(loss.item() / len(batch))})
+        torch.save(model.state_dict(), f'bert_automation_indication/Model/{col}/finetuned_BERT_epoch_{epoch}.model')
 
-            loss_train_avg = loss_train_total / len(dataloader_train)
-            # tqdm.write(f'Training loss: {loss_train_avg}')
-            print(f'Training loss: {loss_train_avg}')
+        # tqdm.write(f'\nEpoch {epoch}')
+        print(f'\n Train Epoch: {epoch}')
 
-            val_loss, predictions, true_vals, log_probs = evaluate(dataloader_validation, model)
-            val_f1 = f1_score_func(predictions, true_vals)
-            # tqdm.write(f'Validation loss: {val_loss}')
-            # tqdm.write(f'F1 Score (Weighted): {val_f1}')
-            print(f'Validation loss: {val_loss}')
-            print(f'F1 Score (Weighted): {val_f1}')
-            print(f'Finished Epoch: {epoch}')
+        loss_train_avg = loss_train_total / len(dataloader_train)
+        # tqdm.write(f'Training loss: {loss_train_avg}')
+        print(f'Training loss: {loss_train_avg}')
+
+        val_loss, predictions, true_vals, log_probs = evaluate(dataloader_validation, model)
+        val_f1 = f1_score_func(predictions, true_vals)
+        # tqdm.write(f'Validation loss: {val_loss}')
+        # tqdm.write(f'F1 Score (Weighted): {val_f1}')
+        print(f'Validation loss: {val_loss}')
+        print(f'F1 Score (Weighted): {val_f1}')
+        print(f'Finished Epoch: {epoch}')
 
     return dataloader_validation
 
@@ -226,7 +224,7 @@ def evaluate(dataloader_val, model):
         logits = logits.detach().cpu().numpy()
         label_ids = inputs['labels'].cpu().numpy()
         predictions.append(logits)
-        log_probs.append(F.softmax(torch.tensor(logits)))
+        log_probs.append(F.softmax(torch.tensor(logits), dim=1))
         true_vals.append(label_ids)
 
     loss_val_avg = loss_val_total / len(dataloader_val)
@@ -244,12 +242,12 @@ def test(label_dict, dataloader_validation, col):
                                                           output_hidden_states=False)
 
     model.to('cpu')
-
-    model.load_state_dict(torch.load(f'bert_automation_indication/Model/{col}/finetuned_BERT.model',
+    for i in range(1, 6):
+        model.load_state_dict(torch.load(f'bert_automation_indication/Model/{col}/finetuned_BERT_epoch_{i}.model',
                                      map_location=torch.device('cpu')))
 
-    _, predictions, true_vals, log_probs = evaluate(dataloader_validation, model)
-    accuracy_per_class(predictions, true_vals, label_dict)
+        _, predictions, true_vals, log_probs = evaluate(dataloader_validation, model)
+        accuracy_per_class(predictions, true_vals, label_dict)
 
 
 def predict(col, df):
@@ -306,10 +304,11 @@ def predict(col, df):
 
         logits = logits.detach().cpu().numpy()
         label_ids = inputs['labels'].cpu().numpy()
-        preds.append(F.softmax(torch.tensor(logits)))
+        preds.append(F.softmax(torch.tensor(logits), dim=1))
 
     preds = torch.cat(preds, 0)
     result_df = pd.DataFrame(preds, columns=headers).astype("float")
+    df.reset_index(inplace=True)
     result_df[col] = df[col]
 
     return result_df
