@@ -19,7 +19,8 @@ if __name__ == '__main__':
     # print(full_activity_features_df['activity'].unique())
     # activity_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/output/{}.csv'.format(c.FILE_NAME), index=False, header=True)
     # full_activity_features_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
-    df = pd.read_csv('bert_automation_indication/Input/full.csv', delimiter=';')
-    AutomationIndication.apply_bert(df)
+    # AutomationIndication.apply_bert(activity_df)
+    df = pd.read_csv('./full.csv', delimiter=';')
+    predictClass(df)
 
 

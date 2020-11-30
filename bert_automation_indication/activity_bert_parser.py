@@ -1,11 +1,9 @@
 import torch
 import pandas as pd
 
-from tqdm.notebook import tqdm
 from transformers import BertTokenizer
 from torch.utils.data import TensorDataset
 from transformers import BertForSequenceClassification
-import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from transformers import AdamW, get_linear_schedule_with_warmup
@@ -13,26 +11,21 @@ from sklearn.metrics import f1_score
 import random
 import numpy as np
 import torch.nn.functional as F
-
-text_columns = ['business object'] #, 'business object', 'action']
-
+import constants as c
 
 def apply_bert(df):
-    do_train = False
-    do_predict = True
     original_df = df.copy()
-    for col in text_columns:
+    for col in c.TEXT_COLUMNS:
         prep_df, label_dict = preprocess(df, col)
         prep_df = prep_df.drop_duplicates(subset=[col])
-        if do_train:
+        if c.DO_TRAIN_BERT:
             dataloader_validation = train(prep_df, col, label_dict, True)
             test(label_dict, dataloader_validation, col)
-        if do_predict:
+        if c.DO_PREDICT_BERT:
             # prep_df = prep_df.drop_duplicates(subset=[col])
             result_df = predict(col, prep_df)
             original_df = original_df.join(result_df.set_index(col), on=col)
-            original_df.to_csv(f'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/'
-                               f'bert_automation_indication/Output/full_{col}.csv', index=False)
+    return original_df
 
 
 def preprocess(df, col):
