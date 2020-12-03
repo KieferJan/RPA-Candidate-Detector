@@ -35,14 +35,18 @@ def preprocess(df, col):
     df = df[df[col] != 'missing']
 
     # Map class label
-    df['task_type'] = df['task_type'].map(
-        {'Physical or Cognitive Task task': 'Physical or Cognitive Task', 'Low Automatable User Task': 'Automated',
-         'High Automatable User Task': 'Automated', 'Automated': 'Automated'})
+    if col != 'action':
+        df['task_type'] = df['task_type'].map(
+            {'Physical or Cognitive Task': 'Physical or Cognitive Task', 'Low Automatable User Task': 'Automated',
+            'High Automatable User Task': 'Automated', 'Automated': 'Automated'})
+
     unique_labels = df['task_type'].unique()
 
     label_dict = {}
     for index, unique_label in enumerate(unique_labels):
         label_dict[unique_label] = index
+
+    print(label_dict)
 
     df['label'] = df['task_type'].replace(label_dict)
     return df, label_dict
@@ -244,14 +248,18 @@ def test(label_dict, dataloader_validation, col):
 
 
 def predict(col, df):
-    label_dict = {'Automated': 0, 'Physical or Cognitive Task': 1}
+    if col != 'action':
+        label_dict = {'Automated': 0, 'Physical or Cognitive Task': 1}
+    else:
+        label_dict = {'Automated': 0, 'Low Automatable User Task': 1, 'High Automatable User Task': 2, 'Physical or Cognitive Task': 3}
+
     label_dict_inverse = {v: k for k, v in label_dict.items()}
     headers = []
     for key in label_dict_inverse:
         headers.append(f'Confidence_{col}_{label_dict_inverse[key]}')
 
     model = BertForSequenceClassification.from_pretrained("bert-base-uncased",
-                                                          num_labels=2,
+                                                          num_labels=len(label_dict),
                                                           output_attentions=False,
                                                           output_hidden_states=False)
 

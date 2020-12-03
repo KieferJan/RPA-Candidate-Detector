@@ -1,6 +1,7 @@
 import pandas as pd
 
 import feature_extraction as fe
+import predictClass as predictor
 import constants as c
 from pm4py.util import constants
 import bert_automation_indication.activity_bert_parser as AutomationIndication
@@ -19,8 +20,11 @@ if __name__ == '__main__':
     # print(full_activity_features_df['activity'].unique())
     # activity_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/output/{}.csv'.format(c.FILE_NAME), index=False, header=True)
     # full_activity_features_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
-    # AutomationIndication.apply_bert(activity_df)
+
     df = pd.read_csv('./full.csv', delimiter=';')
-    predictClass(df)
+    df = AutomationIndication.apply_bert(df)
+    df.to_csv('./outputFull.csv', index=False, header=True)
+    # df = predictor(df)
+    print(df)
 
 
