@@ -23,7 +23,9 @@ if __name__ == '__main__':
 
     df = pd.read_csv('./full.csv', delimiter=';')
     df = AutomationIndication.apply_bert(df)
-    df.to_csv('./outputFull.csv', index=False, header=True)
+
+
+    df.to_csv('./result.csv', index=False, header=True)
     # df = predictor(df)
     print(df)
 

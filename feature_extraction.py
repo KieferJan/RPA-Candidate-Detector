@@ -25,7 +25,7 @@ def import_xes():
         pd.options.display.width = None
         global event_log
         parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
-        event_log = xes_importer.apply('event logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
+        event_log = xes_importer.apply('input_event_logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
         df = log_converter.apply(event_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
         print(df)
         attribute_list_copy = []

@@ -17,6 +17,6 @@ ATTRIBUTE_LIST = [TRACE_ATTRIBUTE_NAME, ACTIVITY_ATTRIBUTE_NAME, TIMESTAMP_ATTRI
 # constants for activity_bert_parser
 DO_TRAIN_BERT = False
 DO_PREDICT_BERT = True
-TEXT_COLUMNS = ['action'] # ['activity', 'business object', 'action']
+TEXT_COLUMNS = ['activity', 'business object', 'action'] #['activity', 'business object', 'action']
 
 # constants for classifier
