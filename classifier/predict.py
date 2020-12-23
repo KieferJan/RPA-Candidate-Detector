@@ -95,9 +95,7 @@ def predict(X):
     return result
 
 def reorder(df):
-    target_order = ['process_name', 'activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task', 'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness', 'deterministic_following_activity', 'deterministic_preceding_activity', 'following_activities_standardization', 'preceding_activities_standardization', 'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time', 'et_relative', 'stability', 'business object', 'action', 'executing resource', 'Confidence_activity_Automated', 'Confidence_activity_Physical or Cognitive Task', 'Confidence_business object_Automated', 'Confidence_business object_Physical or Cognitive Task', 'Confidence_action_Automated', 'Confidence_action_Low Automatable User Task', 'Confidence_action_High Automatable User Task', 'Confidence_action_Physical or Cognitive Task']
-    df = df[target_order] #.sort_values(by='Prob_High Automatable User Task', ascending=False)
-    # 'Log purpose'
-    df.to_csv('./result.csv', index=False, header=True)
+    target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task', 'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness', 'deterministic_following_activity', 'deterministic_preceding_activity', 'following_activities_standardization', 'preceding_activities_standardization', 'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time', 'et_relative', 'stability', 'business object', 'action', 'executing resource', 'Confidence_activity_Automated', 'Confidence_activity_Physical or Cognitive Task', 'Confidence_business object_Automated', 'Confidence_business object_Physical or Cognitive Task', 'Confidence_action_Automated', 'Confidence_action_Low Automatable User Task', 'Confidence_action_High Automatable User Task', 'Confidence_action_Physical or Cognitive Task']
+    df = df[target_order].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
     return df

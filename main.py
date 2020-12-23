@@ -1,6 +1,3 @@
-import pandas as pd
-from pm4py.util import constants
-
 import feature_extraction as fe
 import bert_automation_indication.activity_bert_parser as AutomationIndication
 import classifier.train as train
@@ -12,34 +9,25 @@ import constants as c
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # Workflow Step
-    if False:
-        default_df = fe.import_data()
-        distinct_activity_features_df = fe.extract_activity_features(default_df)
-        full_activity_features_df = fe.extract_activity_features_full_log(default_df)
+    # Workflow Step - Feature Extraction
+    default_df = fe.import_data()
+    distinct_activity_features_df = fe.extract_activity_features(default_df)
+    full_activity_features_df = fe.extract_activity_features_full_log(default_df)
+    # join the two data frames (full trace into unique activities)
+    activity_df = fe.join_full_in_distinct(full_activity_features_df, distinct_activity_features_df)
 
-        # join the two data frames (full trace into unique activities)
-        activity_df = fe.join_full_in_distinct(full_activity_features_df, distinct_activity_features_df)
+    # Workflow Step - Automation Indication Bert
+    df = AutomationIndication.apply_bert(activity_df)
 
-        # log purpose
-        print(activity_df)
-        print(full_activity_features_df['activity'].unique())
-
-
-        # activity_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/output/{}.csv'.format(c.FILE_NAME), index=False, header=True)
-        # full_activity_features_df.to_csv(r'/Users/jankiefer/Documents/Studium/Master/Semester/5. Semester/RPA detector/full.csv', index=False, header=True)
-
-
-        # Workflow Step
-        df = AutomationIndication.apply_bert(activity_df)
-    df = pd.read_csv('./input.csv')
+    # Workflow Step - Predict Class
     if c.DO_PREDICT_CLASSIFIER:
         print('Start predict')
         df = predict.start(df)
+        print('Finish predict')
     else:
         print('Start train')
         train.start()
         df = predict.start(df)
 
-
+    df.to_csv('./predictedDataset.csv', index=False, header=True)
 

@@ -1,5 +1,6 @@
 import torch
 import pandas as pd
+import logging
 
 from transformers import BertTokenizer
 from torch.utils.data import TensorDataset
@@ -14,6 +15,7 @@ import torch.nn.functional as F
 import constants as c
 
 def apply_bert(df):
+    logging.basicConfig(level=logging.ERROR)
     original_df = df.copy()
     for col in c.TEXT_COLUMNS:
         prep_df, label_dict = preprocess(df, col)
@@ -22,13 +24,13 @@ def apply_bert(df):
             dataloader_validation = train(prep_df, col, label_dict, True)
             test(label_dict, dataloader_validation, col)
         if c.DO_PREDICT_BERT:
-            # prep_df = prep_df.drop_duplicates(subset=[col])
             result_df = predict(col, prep_df)
             original_df = original_df.join(result_df.set_index(col), on=col)
     return original_df
 
 
-def preprocess(df, col):
+def preprocess(orig_df, col):
+    df = orig_df.copy()
     df.drop(df.columns.difference([col, 'task_type']), 1, inplace=True)
 
     # remove missing values
@@ -46,13 +48,11 @@ def preprocess(df, col):
     for index, unique_label in enumerate(unique_labels):
         label_dict[unique_label] = index
 
-    print(label_dict)
-
     df['label'] = df['task_type'].replace(label_dict)
     return df, label_dict
 
 
-def train(df, col, label_dict, do_train):
+def train(df, col, label_dict):
     X_train, X_val, y_train, y_val = train_test_split(df.index.values,
                                                       df.label.values,
                                                       test_size=0.15,

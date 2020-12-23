@@ -1,5 +1,5 @@
 # Settings for the feature_extraction
-FILE_NAME = 'CreditRequirement'
+FILE_NAME = 'Sepsis Cases - Event Log'
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
 ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'

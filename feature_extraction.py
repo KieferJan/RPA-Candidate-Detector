@@ -27,7 +27,6 @@ def import_xes():
         parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
         event_log = xes_importer.apply('input_event_logs/{}.xes'.format(c.FILE_NAME), parameters=parameters)
         df = log_converter.apply(event_log, variant=log_converter.Variants.TO_DATA_FRAME, parameters=parameters)
-        print(df)
         attribute_list_copy = []
         for attribute in c.ATTRIBUTE_LIST:
             if attribute in df.columns:
@@ -78,15 +77,9 @@ def join_full_in_distinct(full_df, distinct_df):
     result_df = result_df.join(full_grouped_rel_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_stability.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_automation.set_index('activity'), on='activity')
+    result_df['process_name'] = c.FILE_NAME
 
     return result_df
-
-# def join_distinct_in_full(distinct_df, full_df):
-#     full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.lower())
-#     full_df['concept:name'] = full_df['concept:name'].apply(lambda x: x.replace("_", " "))
-#
-#     result_df = full_df.join(distinct_df.set_index('activity'), on='concept:name')
-#     return result_df
 
 
 def replace_special_characters(series):
@@ -124,6 +117,7 @@ def extract_activity_features_full_log(df):
     df_full_ef_et_stability = extract_stability(df_full_ef_et)
     df_full_ef_et_stability_automation = match_automation(df_full_ef_et_stability)
     df_full_ef_et_stability_automation['activity'] = replace_special_characters(df_full_ef_et_stability_automation['activity'])
+
     return df_full_ef_et_stability_automation
 
 
@@ -473,7 +467,7 @@ def extract_IT_relatedness(df):
                         'multiplexer', 'multiuser', 'nesting', 'NetScape', 'Network Layer', 'network', 'nickname',
                         'node', 'noise', 'object', 'object-based', 'object code', 'object-oriented',
                         'object-oriented technology', 'OLE', 'off-line ', 'on-line ', 'Online Service', 'open',
-                        'open platform', 'open system', 'OSI ', 'OpenWindows', 'operating system', 'output', 'packet',
+                        'open platform', 'open system', 'OSI ', 'OpenWindows', 'operating system', 'event_logs_as_csv', 'packet',
                         'parameter', 'parity', 'password', 'peripheral ', 'PC', 'Physical Layer', 'ping', 'pixel',
                         'platform', 'plotter', 'polymorphism', 'port', 'portable', 'post', 'PostScript', 'Power PC',
                         'Presentation layer', 'printer', 'printout', 'procedure', 'process', 'program', 'programmer',
