@@ -1,20 +1,16 @@
 import pickle
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, OrdinalEncoder
-import matplotlib.pyplot as plt
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import StratifiedKFold
 import constants as c
 
 
 
 def start(df):
-   X = preprocess(df)
-   df = predict(X)
+   X, new_df = preprocess(df)
+   predictions = predict(X)
 
-   return df
+   new_df = new_df.join(predictions)
+   new_df = reorder(new_df)
+   return new_df
 
 def preprocess(df):
     # Adjust missing values
@@ -39,7 +35,13 @@ def preprocess(df):
               'Confidence_business object_Physical or Cognitive Task': 0.0}
 
     df.fillna(value=values, inplace=True)
-    df.dropna(inplace=True)
+    # df.dropna(inplace=True)
+    na_free = df.dropna()
+    na_free.reset_index(drop=True, inplace=True)
+    only_na = df[~df.index.isin(na_free.index)]
+    if not only_na.empty:
+        print('Dropped rows due to missing values')
+        print(only_na)
 
     numeric_features = ['IT_relatedness', 'following_activities_standardization',
                         'preceding_activities_standardization', 'failure_rate',
@@ -57,33 +59,45 @@ def preprocess(df):
     categorical_features = ['deterministic_following_activity',
                             'deterministic_preceding_activity']
 
-    X = transform_data(df[c.FEATURE_SUBSET], numeric_features, categorical_features)
+    X = transform_data(na_free, numeric_features, categorical_features)
+
+    return X, na_free
+
+
+def transform_data(df, numeric_features, categorical_features):
+    # numeric fetures scaling
+    stscaler = pickle.load(open('./classifier/model/scaler.pkl', 'rb'))
+    onehotencoder = pickle.load(open('./classifier/model/onehotencoder.pkl', 'rb'))
+
+    # transform numeric data
+    X = pd.DataFrame(stscaler.transform(df[numeric_features]), columns=numeric_features)
+
+    # transform categorical data
+    X = X.join(
+        pd.DataFrame(onehotencoder.transform(df[categorical_features]).toarray(),
+                     columns=onehotencoder.get_feature_names(categorical_features)))
+
+    X = X[c.FEATURE_SUBSET]
 
     return X
 
+def predict(X):
+    # and later you can load it
+    with open('./classifier/model/rf_model.pkl', 'rb') as f:
+        rf = pickle.load(f)
 
-def transform_data(X_train, numeric_features, categorical_features):
-    # numeric fetures scaling
-    stscaler = pickle.load(open('model/scaler.pkl','rb'))
-    X_full = X_train.append(X_test)
+    prediction = rf.predict_proba(X)
 
-    # transform numeric data
-    X_train_trans = pd.DataFrame(stscaler.transform(X_train[numeric_features]), columns=numeric_features)
-    X_test_trans = pd.DataFrame(stscaler.transform(X_test[numeric_features]), columns=numeric_features)
+    result = pd.DataFrame({'Prob_Automated': prediction[:, 0], 'Prob_Low Automatable User Task': prediction[:, 1],
+                           'Prob_High Automatable User Task': prediction[:, 2],
+                           'Prob_Physical or Cognitive Task': prediction[:, 3]})
 
-    # categorical features one hot encoding
-    onehotencoder = OneHotEncoder()
-    onehotencoder.fit(X_full[categorical_features])
+    return result
 
-    # transform categorical data
-    X_train_trans = X_train_trans.join(
-        pd.DataFrame(onehotencoder.transform(X_train[categorical_features]).toarray(),
-                     columns=onehotencoder.get_feature_names(categorical_features)))
-    X_test_trans = X_test_trans.join(pd.DataFrame(onehotencoder.transform(X_test[categorical_features]).toarray(),
-                                                  columns=onehotencoder.get_feature_names(categorical_features)))
-
-    return X_train_trans, X_test_trans
-
-def predict(df):
+def reorder(df):
+    target_order = ['process_name', 'activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task', 'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness', 'deterministic_following_activity', 'deterministic_preceding_activity', 'following_activities_standardization', 'preceding_activities_standardization', 'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time', 'et_relative', 'stability', 'business object', 'action', 'executing resource', 'Confidence_activity_Automated', 'Confidence_activity_Physical or Cognitive Task', 'Confidence_business object_Automated', 'Confidence_business object_Physical or Cognitive Task', 'Confidence_action_Automated', 'Confidence_action_Low Automatable User Task', 'Confidence_action_High Automatable User Task', 'Confidence_action_Physical or Cognitive Task']
+    df = df[target_order] #.sort_values(by='Prob_High Automatable User Task', ascending=False)
+    # 'Log purpose'
+    df.to_csv('./result.csv', index=False, header=True)
 
     return df

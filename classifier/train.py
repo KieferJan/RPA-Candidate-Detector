@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
 from sklearn.metrics import confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
@@ -105,7 +104,6 @@ def train(X_train_trans, X_test_trans, y_train, y_test):
     rslt['acc_class1'] = acc_class1
     rslt['acc_class2'] = acc_class2
 
-    pd.set_option('display.max_rows', None)
     print(rslt)
 
     with open('./classifier/model/rf_model.pkl', 'wb') as f:
