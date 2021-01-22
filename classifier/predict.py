@@ -59,23 +59,20 @@ def preprocess(df):
     categorical_features = ['deterministic_following_activity',
                             'deterministic_preceding_activity']
 
-    X = transform_data(na_free, numeric_features, categorical_features)
+    X = transform_data(na_free, numeric_features)
 
     return X, na_free
 
 
-def transform_data(df, numeric_features, categorical_features):
+def transform_data(df, numeric_features):
     # numeric fetures scaling
     stscaler = pickle.load(open('./classifier/model/scaler.pkl', 'rb'))
-    onehotencoder = pickle.load(open('./classifier/model/onehotencoder.pkl', 'rb'))
+    # onehotencoder = pickle.load(open('./classifier/model/onehotencoder.pkl', 'rb'))
 
     # transform numeric data
     X = pd.DataFrame(stscaler.transform(df[numeric_features]), columns=numeric_features)
 
     # transform categorical data
-    X = X.join(
-        pd.DataFrame(onehotencoder.transform(df[categorical_features]).toarray(),
-                     columns=onehotencoder.get_feature_names(categorical_features)))
 
     X = X[c.FEATURE_SUBSET]
 

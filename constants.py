@@ -15,32 +15,15 @@ ATTRIBUTE_LIST = [TRACE_ATTRIBUTE_NAME, ACTIVITY_ATTRIBUTE_NAME, TIMESTAMP_ATTRI
                   ORG_ROLE_ATTRIBUTE_NAME]
 
 # Settings for activity_bert_parser for
-DO_TRAIN_BERT = False
-DO_PREDICT_BERT = True
+# For Training, use only one text column as the best model needs to be selected and stored
 TEXT_COLUMNS = ['activity', 'business object', 'action']  # ['activity', 'business object', 'action']
+BATCH_SIZE = 16
 
 # Settings for classifier
-DO_PREDICT_CLASSIFIER = True
-LABEL_DICT = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
+LABEL_DICT_ACTION = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
               'Physical or Cognitive Task': 3}
-FEATURE_SUBSET = ['IT_relatedness',
-                  'deterministic_following_activity_False',
-                  'deterministic_following_activity_True',
-                  'deterministic_preceding_activity_False',
-                  'deterministic_following_activity_True',
-                  'following_activities_standardization',
-                  'preceding_activities_standardization',
-                  'failure_rate',
-                  'number_of_resources',
-                  'ef_relative',
-                  'median_execution_time',
-                  'et_relative',
-                  'stability',
-                  'Confidence_activity_Automated',
-                  'Confidence_activity_Physical or Cognitive Task',
-                  'Confidence_action_Automated',
+LABEL_DICT = {'Automated': 0, 'Physical or Cognitive Task': 1}
+FEATURE_SUBSET = ['Confidence_action_Automated',
                   'Confidence_action_Low Automatable User Task',
                   'Confidence_action_High Automatable User Task',
-                  'Confidence_action_Physical or Cognitive Task',
-                  'Confidence_business object_Automated',
-                  'Confidence_business object_Physical or Cognitive Task']
+                  'Confidence_action_Physical or Cognitive Task']
