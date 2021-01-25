@@ -16,13 +16,13 @@ ATTRIBUTE_LIST = [TRACE_ATTRIBUTE_NAME, ACTIVITY_ATTRIBUTE_NAME, TIMESTAMP_ATTRI
 
 # Settings for activity_bert_parser for
 # For Training, use only one text column as the best model needs to be selected and stored
-TEXT_COLUMNS = ['activity', 'business object', 'action']  # ['activity', 'business object', 'action']
+TEXT_COLUMNS = ['activity']  # ['activity', 'business object', 'action']
 BATCH_SIZE = 16
 
 # Settings for classifier
-LABEL_DICT_ACTION = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
+LABEL_DICT = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
               'Physical or Cognitive Task': 3}
-LABEL_DICT = {'Automated': 0, 'Physical or Cognitive Task': 1}
+LABEL_DICT_BO = {'Automated': 0, 'Physical or Cognitive Task': 1}
 FEATURE_SUBSET = ['Confidence_action_Automated',
                   'Confidence_action_Low Automatable User Task',
                   'Confidence_action_High Automatable User Task',

@@ -10,6 +10,7 @@ def start(df):
 
    new_df = new_df.join(predictions)
    new_df = reorder(new_df)
+   new_df = renameColumns(new_df)
    return new_df
 
 def preprocess(df):
@@ -25,14 +26,16 @@ def preprocess(df):
               'ef_relative': 0.0,
               'median_execution_time': 0.0,
               'et_relative': 0.0,
-              'Confidence_activity_Automated': 0.0,
-              'Confidence_activity_Physical or Cognitive Task': 0.0,
-              'Confidence_action_Automated': 0.0,
-              'Confidence_action_Physical or Cognitive Task': 0.0,
-              'Confidence_action_Low Automatable User Task': 0.0,
-              'Confidence_action_High Automatable User Task': 0.0,
-              'Confidence_business object_Automated': 0.0,
-              'Confidence_business object_Physical or Cognitive Task': 0.0}
+              'C_activity_Automated': 0.0,
+              'C_activity_Physical or Cognitive Task': 0.0,
+              'C_activity_Low Automatable User Task': 0.0,
+              'C_activity_High Automatable User Task': 0.0,
+              'C_action_Automated': 0.0,
+              'C_action_Physical or Cognitive Task': 0.0,
+              'C_action_Low Automatable User Task': 0.0,
+              'C_action_High Automatable User Task': 0.0,
+              'C_business object_Automated': 0.0,
+              'C_business object_Physical or Cognitive Task': 0.0}
 
     df.fillna(value=values, inplace=True)
     # df.dropna(inplace=True)
@@ -47,14 +50,14 @@ def preprocess(df):
                         'preceding_activities_standardization', 'failure_rate',
                         'number_of_resources', 'ef_relative',
                         'median_execution_time', 'et_relative', 'stability',
-                        'Confidence_activity_Automated',
-                        'Confidence_activity_Physical or Cognitive Task',
-                        'Confidence_action_Automated',
-                        'Confidence_action_Physical or Cognitive Task',
-                        'Confidence_action_Low Automatable User Task',
-                        'Confidence_action_High Automatable User Task',
-                        'Confidence_business object_Automated',
-                        'Confidence_business object_Physical or Cognitive Task']
+                        'C_activity_Automated',
+                        'C_activity_Physical or Cognitive Task',
+                        'C_action_Automated',
+                        'C_action_Physical or Cognitive Task',
+                        'C_action_Low Automatable User Task',
+                        'C_action_High Automatable User Task',
+                        'C_business object_Automated',
+                        'C_business object_Physical or Cognitive Task']
 
     categorical_features = ['deterministic_following_activity',
                             'deterministic_preceding_activity']
@@ -95,4 +98,15 @@ def reorder(df):
     target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task', 'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness', 'deterministic_following_activity', 'deterministic_preceding_activity', 'following_activities_standardization', 'preceding_activities_standardization', 'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time', 'et_relative', 'stability', 'business object', 'action', 'executing resource', 'Confidence_activity_Automated', 'Confidence_activity_Physical or Cognitive Task', 'Confidence_business object_Automated', 'Confidence_business object_Physical or Cognitive Task', 'Confidence_action_Automated', 'Confidence_action_Low Automatable User Task', 'Confidence_action_High Automatable User Task', 'Confidence_action_Physical or Cognitive Task']
     df = df[target_order].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
+    return df
+
+def renameColumns(df):
+    df.rename(columns={'following_activities_standardization': 'standardization_f_e',
+                       'preceding_activities_standardization': 'standardization_p_e',
+                       'deterministic_following_activity': 'deterministic_f_e',
+                       'deterministic_preceding_activity': 'deterministic_p_e',
+                       'action': 'type_of_action',
+                       'business object': 'type_of_business_object',
+                       'executing resource': 'type_of_executing_resource'
+                       })
     return df

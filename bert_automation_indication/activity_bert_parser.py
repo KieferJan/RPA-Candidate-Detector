@@ -28,7 +28,7 @@ def preprocess(orig_df, col):
     df = df[df[col] != 'missing']
 
     # Map class label
-    if col != 'action':
+    if col == 'business object':
          df['task_type'] = df['task_type'].map(
             {'Physical or Cognitive Task': 'Physical or Cognitive Task', 'Low Automatable User Task': 'Automated',
             'High Automatable User Task': 'Automated', 'Automated': 'Automated'})
@@ -44,15 +44,15 @@ def preprocess(orig_df, col):
 def predict(col, df):
     print('Start extract BERT features')
 
-    if col == 'action':
-        label_dict = c.LABEL_DICT_ACTION
+    if col == 'business object':
+        label_dict = c.LABEL_DICT_BO
     else:
         label_dict = c.LABEL_DICT
 
     label_dict_inverse = {v: k for k, v in label_dict.items()}
     headers = []
     for key in label_dict_inverse:
-        headers.append(f'Confidence_{col}_{label_dict_inverse[key]}')
+        headers.append(f'C_{col}_{label_dict_inverse[key]}')
 
     device = torch.device('cpu')
     model = BertForSequenceClassification.from_pretrained(f'./bert_automation_indication/Model/{col}/model/')
