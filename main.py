@@ -18,16 +18,16 @@ if __name__ == '__main__':
     # print('----Features Extracted----')
     #
     # # Workflow Step - Automation Indication BERT
-    activity_df = pd.read_csv('full.csv', delimiter=';')
-    df = AutomationIndication.apply_bert(activity_df)
-    df.to_csv('./extractedFeatures.csv', index=False, header=True)
-    print('----BERT Confidence Features Extracted----')
+    # df = AutomationIndication.apply_bert(activity_df)
+    # df.to_csv('./extractedFeatures.csv', index=False, header=True)
+    # print('----BERT Confidence Features Extracted----')
 
-    # # Workflow Step - Predict Class
-    # print('Start predict')
-    # df = predict.start(df)
-    # print('Finish predict')
-    # df.to_csv('./predictedDataset.csv', index=False, header=True)
+    # Workflow Step - Predict Class
+    df = pd.read_csv('extractedFeatures.csv', delimiter=';')
+    print('Start predict')
+    df = predict.start(df)
+    print('Finish predict')
+    df.to_csv('./predictedDataset.csv', index=False, header=True)
 
 
 

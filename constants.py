@@ -23,7 +23,13 @@ BATCH_SIZE = 16
 LABEL_DICT = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
               'Physical or Cognitive Task': 3}
 LABEL_DICT_BO = {'Automated': 0, 'Physical or Cognitive Task': 1}
-FEATURE_SUBSET = ['Confidence_action_Automated',
-                  'Confidence_action_Low Automatable User Task',
-                  'Confidence_action_High Automatable User Task',
-                  'Confidence_action_Physical or Cognitive Task']
+FEATURE_SUBSET = [      'C_activity_Automated',
+                        'C_activity_Physical or Cognitive Task',
+                        'C_activity_Low Automatable User Task',
+                        'C_activity_High Automatable User Task',
+                        'C_action_Automated',
+                        'C_action_Physical or Cognitive Task',
+                        'C_action_Low Automatable User Task',
+                        'C_action_High Automatable User Task',
+                        'C_business object_Automated',
+                        'C_business object_Physical or Cognitive Task']

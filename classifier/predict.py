@@ -52,6 +52,8 @@ def preprocess(df):
                         'median_execution_time', 'et_relative', 'stability',
                         'C_activity_Automated',
                         'C_activity_Physical or Cognitive Task',
+                        'C_activity_Low Automatable User Task',
+                        'C_activity_High Automatable User Task',
                         'C_action_Automated',
                         'C_action_Physical or Cognitive Task',
                         'C_action_Low Automatable User Task',
@@ -83,10 +85,10 @@ def transform_data(df, numeric_features):
 
 def predict(X):
     # and later you can load it
-    with open('./classifier/model/rf_model.pkl', 'rb') as f:
-        rf = pickle.load(f)
+    with open('./classifier/model/svm_model.pkl', 'rb') as f:
+        svm = pickle.load(f)
 
-    prediction = rf.predict_proba(X)
+    prediction = svm.predict_proba(X)
 
     result = pd.DataFrame({'Prob_Automated': prediction[:, 0], 'Prob_Low Automatable User Task': prediction[:, 1],
                            'Prob_High Automatable User Task': prediction[:, 2],
@@ -95,7 +97,19 @@ def predict(X):
     return result
 
 def reorder(df):
-    target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task', 'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness', 'deterministic_following_activity', 'deterministic_preceding_activity', 'following_activities_standardization', 'preceding_activities_standardization', 'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time', 'et_relative', 'stability', 'business object', 'action', 'executing resource', 'Confidence_activity_Automated', 'Confidence_activity_Physical or Cognitive Task', 'Confidence_business object_Automated', 'Confidence_business object_Physical or Cognitive Task', 'Confidence_action_Automated', 'Confidence_action_Low Automatable User Task', 'Confidence_action_High Automatable User Task', 'Confidence_action_Physical or Cognitive Task']
+    target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task',
+                    'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness',
+                    'deterministic_following_activity', 'deterministic_preceding_activity',
+                    'following_activities_standardization', 'preceding_activities_standardization',
+                    'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time',
+                    'et_relative', 'stability', 'business object', 'action', 'executing resource',
+                    'C_activity_Automated', 'C_activity_Physical or Cognitive Task',
+                    'C_activity_Low Automatable User Task',
+                    'C_activity_High Automatable User Task',
+                    'C_business object_Automated', 'C_business object_Physical or Cognitive Task',
+                    'C_action_Automated', 'C_action_Low Automatable User Task',
+                    'C_action_High Automatable User Task', 'C_action_Physical or Cognitive Task',
+                    'process_name']
     df = df[target_order].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
     return df
@@ -107,6 +121,12 @@ def renameColumns(df):
                        'deterministic_preceding_activity': 'deterministic_p_e',
                        'action': 'type_of_action',
                        'business object': 'type_of_business_object',
-                       'executing resource': 'type_of_executing_resource'
+                       'executing resource': 'type_of_executing_resource',
+                       'C_activity_Automated': 'C_eventlabel_Automated',
+                       'C_activity_Physical or Cognitive Task': 'C_eventlabel_Physical or Cognitive Task',
+                       'C_activity_Low Automatable User Task': 'C_eventlabel_Low Automatable User Task',
+                       'C_activity_High Automatable User Task': 'C_eventlabel_High Automatable User Task',
+                       'C_business object_Automated': 'C_businessobject_Digital',
+                       'C_business object_Physical or Cognitive Task': 'C_businessobject_Physical'
                        })
     return df
