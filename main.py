@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # print('----BERT Confidence Features Extracted----')
 
     # Workflow Step - Predict Class
-    df = pd.read_csv('extractedFeatures.csv', delimiter=';')
+    df = pd.read_csv('extractedFeatures.csv')
     print('Start predict')
     df = predict.start(df)
     print('Finish predict')

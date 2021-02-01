@@ -1,17 +1,19 @@
 import pickle
 import pandas as pd
 import constants as c
+from sklearn.metrics import classification_report
 
 
 
 def start(df):
-   X, new_df = preprocess(df)
+   #X, new_df = preprocess(df)
+   X = preprocess(df)
    predictions = predict(X)
 
-   new_df = new_df.join(predictions)
-   new_df = reorder(new_df)
-   new_df = renameColumns(new_df)
-   return new_df
+   df = df.join(predictions)
+   df = reorder(df)
+   df = renameColumns(df)
+   return df
 
 def preprocess(df):
     # Adjust missing values
@@ -39,12 +41,12 @@ def preprocess(df):
 
     df.fillna(value=values, inplace=True)
     # df.dropna(inplace=True)
-    na_free = df.dropna()
-    na_free.reset_index(drop=True, inplace=True)
-    only_na = df[~df.index.isin(na_free.index)]
-    if not only_na.empty:
-        print('Dropped rows due to missing values')
-        print(only_na)
+    # na_free = df.dropna()
+    # na_free.reset_index(drop=True, inplace=True)
+    # only_na = df[~df.index.isin(na_free.index)]
+    # if not only_na.empty:
+    #     print('Dropped rows due to missing values')
+    #     print(only_na)
 
     numeric_features = ['IT_relatedness', 'following_activities_standardization',
                         'preceding_activities_standardization', 'failure_rate',
@@ -64,9 +66,9 @@ def preprocess(df):
     categorical_features = ['deterministic_following_activity',
                             'deterministic_preceding_activity']
 
-    X = transform_data(na_free, numeric_features)
+    X = transform_data(df, numeric_features)
 
-    return X, na_free
+    return X
 
 
 def transform_data(df, numeric_features):
@@ -98,17 +100,18 @@ def predict(X):
 
 def reorder(df):
     target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task',
-                    'Prob_Automated', 'Prob_Physical or Cognitive Task', 'IT_relatedness',
-                    'deterministic_following_activity', 'deterministic_preceding_activity',
-                    'following_activities_standardization', 'preceding_activities_standardization',
-                    'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time',
-                    'et_relative', 'stability', 'business object', 'action', 'executing resource',
+                    'Prob_Automated', 'Prob_Physical or Cognitive Task',
+                    'C_action_Automated', 'C_action_Low Automatable User Task',
+                    'C_action_High Automatable User Task', 'C_action_Physical or Cognitive Task',
                     'C_activity_Automated', 'C_activity_Physical or Cognitive Task',
                     'C_activity_Low Automatable User Task',
                     'C_activity_High Automatable User Task',
                     'C_business object_Automated', 'C_business object_Physical or Cognitive Task',
-                    'C_action_Automated', 'C_action_Low Automatable User Task',
-                    'C_action_High Automatable User Task', 'C_action_Physical or Cognitive Task',
+                    'IT_relatedness',
+                    'deterministic_following_activity', 'deterministic_preceding_activity',
+                    'following_activities_standardization', 'preceding_activities_standardization',
+                    'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time',
+                    'et_relative', 'stability', 'business object', 'action', 'executing resource',
                     'process_name']
     df = df[target_order].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
@@ -122,11 +125,15 @@ def renameColumns(df):
                        'action': 'type_of_action',
                        'business object': 'type_of_business_object',
                        'executing resource': 'type_of_executing_resource',
-                       'C_activity_Automated': 'C_eventlabel_Automated',
-                       'C_activity_Physical or Cognitive Task': 'C_eventlabel_Physical or Cognitive Task',
-                       'C_activity_Low Automatable User Task': 'C_eventlabel_Low Automatable User Task',
-                       'C_activity_High Automatable User Task': 'C_eventlabel_High Automatable User Task',
-                       'C_business object_Automated': 'C_businessobject_Digital',
-                       'C_business object_Physical or Cognitive Task': 'C_businessobject_Physical'
+                       'C_activity_Automated': 'event label is C_A',
+                       'C_activity_Physical or Cognitive Task': 'event label is C_P',
+                       'C_activity_Low Automatable User Task': 'event label is C_L',
+                       'C_activity_High Automatable User Task': 'event label is C_H',
+                       'C_business object_Automated': 'BO is Digital',
+                       'C_business object_Physical or Cognitive Task': 'BO is Physical',
+                        'C_action_Automated': 'action is C_A',
+                       'C_action_Low Automatable User Task': 'action is C_L',
+                        'C_action_High Automatable User Task': 'action is C_H',
+                        'C_action_Physical or Cognitive Task': 'action is C_P',
                        })
     return df

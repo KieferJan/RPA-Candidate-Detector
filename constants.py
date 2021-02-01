@@ -16,20 +16,22 @@ ATTRIBUTE_LIST = [TRACE_ATTRIBUTE_NAME, ACTIVITY_ATTRIBUTE_NAME, TIMESTAMP_ATTRI
 
 # Settings for activity_bert_parser for
 # For Training, use only one text column as the best model needs to be selected and stored
-TEXT_COLUMNS = ['activity']  # ['activity', 'business object', 'action']
+TEXT_COLUMNS = ['activity', 'business object', 'action']  # ['activity', 'business object', 'action']
 BATCH_SIZE = 16
 
 # Settings for classifier
 LABEL_DICT = {'Automated': 0, 'High Automatable User Task': 2, 'Low Automatable User Task': 1,
               'Physical or Cognitive Task': 3}
 LABEL_DICT_BO = {'Automated': 0, 'Physical or Cognitive Task': 1}
-FEATURE_SUBSET = [      'C_activity_Automated',
-                        'C_activity_Physical or Cognitive Task',
-                        'C_activity_Low Automatable User Task',
-                        'C_activity_High Automatable User Task',
-                        'C_action_Automated',
-                        'C_action_Physical or Cognitive Task',
-                        'C_action_Low Automatable User Task',
-                        'C_action_High Automatable User Task',
-                        'C_business object_Automated',
-                        'C_business object_Physical or Cognitive Task']
+FEATURE_SUBSET =  [      'C_activity_Automated',
+                         'C_activity_Physical or Cognitive Task',
+                          'C_activity_Low Automatable User Task',
+                         'C_activity_High Automatable User Task',
+                         'C_action_Automated',
+                         'C_action_Physical or Cognitive Task',
+                         'C_action_Low Automatable User Task',
+                         'C_action_High Automatable User Task',
+                         'C_business object_Automated',
+                         'C_business object_Physical or Cognitive Task']
+
+
