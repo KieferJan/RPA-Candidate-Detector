@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 import constants as c
-from sklearn.metrics import classification_report
+import numpy as np
 
 
 
@@ -40,57 +40,38 @@ def preprocess(df):
               'C_business object_Physical or Cognitive Task': 0.0}
 
     df.fillna(value=values, inplace=True)
-    # df.dropna(inplace=True)
-    # na_free = df.dropna()
-    # na_free.reset_index(drop=True, inplace=True)
-    # only_na = df[~df.index.isin(na_free.index)]
-    # if not only_na.empty:
-    #     print('Dropped rows due to missing values')
-    #     print(only_na)
 
-    numeric_features = ['IT_relatedness', 'following_activities_standardization',
-                        'preceding_activities_standardization', 'failure_rate',
-                        'number_of_resources', 'ef_relative',
-                        'median_execution_time', 'et_relative', 'stability',
-                        'C_activity_Automated',
-                        'C_activity_Physical or Cognitive Task',
-                        'C_activity_Low Automatable User Task',
-                        'C_activity_High Automatable User Task',
-                        'C_action_Automated',
-                        'C_action_Physical or Cognitive Task',
-                        'C_action_Low Automatable User Task',
-                        'C_action_High Automatable User Task',
-                        'C_business object_Automated',
-                        'C_business object_Physical or Cognitive Task']
+    X = transform_data(df)
 
-    categorical_features = ['deterministic_following_activity',
-                            'deterministic_preceding_activity']
-
-    X = transform_data(df, numeric_features)
-
+    for col in c.ONE_HOT_COLS:
+        if col not in X.columns:
+            X[col] = np.nan
+    X.fillna(value=0, inplace=True)
     return X
 
 
-def transform_data(df, numeric_features):
+def transform_data(df):
     # numeric fetures scaling
     stscaler = pickle.load(open('./classifier/model/scaler.pkl', 'rb'))
-    # onehotencoder = pickle.load(open('./classifier/model/onehotencoder.pkl', 'rb'))
+    onehotencoder = pickle.load(open('./classifier/model/onehotencoder.pkl', 'rb'))
 
     # transform numeric data
-    X = pd.DataFrame(stscaler.transform(df[numeric_features]), columns=numeric_features)
+    X_trans = pd.DataFrame(stscaler.transform(df[c.NUM_FEATURES]), columns=c.NUM_FEATURES)
 
     # transform categorical data
+    X_trans = X_trans.join(pd.DataFrame(onehotencoder.transform(df[c.CAT_FEATURES]).toarray(),
+                            columns=onehotencoder.get_feature_names(c.CAT_FEATURES)))
 
-    X = X[c.FEATURE_SUBSET]
+    X_trans = X_trans[c.FEATURE_SUBSET]
 
-    return X
+    return X_trans
 
 def predict(X):
     # and later you can load it
-    with open('./classifier/model/svm_model.pkl', 'rb') as f:
-        svm = pickle.load(f)
+    with open('./classifier/model/rf_model.pkl', 'rb') as f:
+        rf = pickle.load(f)
 
-    prediction = svm.predict_proba(X)
+    prediction = rf.predict_proba(X)
 
     result = pd.DataFrame({'Prob_Automated': prediction[:, 0], 'Prob_Low Automatable User Task': prediction[:, 1],
                            'Prob_High Automatable User Task': prediction[:, 2],
@@ -99,21 +80,8 @@ def predict(X):
     return result
 
 def reorder(df):
-    target_order = ['activity', 'task_type', 'Prob_High Automatable User Task', 'Prob_Low Automatable User Task',
-                    'Prob_Automated', 'Prob_Physical or Cognitive Task',
-                    'C_action_Automated', 'C_action_Low Automatable User Task',
-                    'C_action_High Automatable User Task', 'C_action_Physical or Cognitive Task',
-                    'C_activity_Automated', 'C_activity_Physical or Cognitive Task',
-                    'C_activity_Low Automatable User Task',
-                    'C_activity_High Automatable User Task',
-                    'C_business object_Automated', 'C_business object_Physical or Cognitive Task',
-                    'IT_relatedness',
-                    'deterministic_following_activity', 'deterministic_preceding_activity',
-                    'following_activities_standardization', 'preceding_activities_standardization',
-                    'failure_rate', 'number_of_resources', 'ef_relative', 'median_execution_time',
-                    'et_relative', 'stability', 'business object', 'action', 'executing resource',
-                    'process_name']
-    df = df[target_order].sort_values(by='Prob_High Automatable User Task', ascending=False)
+
+    df = df[c.TARGET_ORDER].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
     return df
 
