@@ -12,6 +12,7 @@ import re
 event_log = ""
 activity_automation_dict = {}
 
+# Import event depending on data type
 def import_data():
     if c.DATATYPE == 'XES':
         default_df = import_xes()
@@ -52,11 +53,10 @@ def import_csv():
     event_log = log_converter.apply(log_csv)
     return log_csv
 
-
+# join the aggregated columns "execution frequency", "median_execution_time" from the trace dataframe into the
+# dataframe with distinct activities
+# group the data frame that contains data from all traces
 def join_full_in_distinct(full_df, distinct_df):
-    # join the aggregated columns "execution frequency", "median_execution_time" from the trace dataframe into the
-    # dataframe with distinct activities
-    # group the data frame that contains data from all traces
     full_grouped_ef = full_df.groupby('activity')['ef_relative'].mean().reset_index()
     full_grouped_et = full_df.groupby('activity')['median_execution_time'].median().reset_index()
     full_grouped_rel_et = full_df.groupby('activity')['et_relative'].median().reset_index()
@@ -81,7 +81,7 @@ def join_full_in_distinct(full_df, distinct_df):
 
     return result_df
 
-
+# Replace special characters from the event label
 def replace_special_characters(series):
     series = series.apply(lambda x: x.lower())
     series = series.apply(lambda x: x.replace("_", " "))
@@ -97,7 +97,7 @@ def replace_special_characters(series):
 
     return series
 
-
+# Extract activity features and add them to the data frame
 def extract_activity_features(df):
     global event_log
     df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
@@ -109,66 +109,68 @@ def extract_activity_features(df):
     df_w_actLabels_ITrelated_Deterministic_std_fr_nr = extract_number_resources(df_w_actLabels_ITrelated_deterministic_std_fr)
     return df_w_actLabels_ITrelated_Deterministic_std_fr_nr
 
-
+# Extract activity features that are aggregations over the trace executions
 def extract_activity_features_full_log(df):
     df.rename(columns={c.ACTIVITY_ATTRIBUTE_NAME: "activity"}, inplace=True)
     df_full_ef = extract_execution_frequency(df)
     df_full_ef_et = extract_execution_time(df_full_ef)
     df_full_ef_et_stability = extract_stability(df_full_ef_et)
-    df_full_ef_et_stability_automation = match_automation(df_full_ef_et_stability)
-    df_full_ef_et_stability_automation['activity'] = replace_special_characters(df_full_ef_et_stability_automation['activity'])
+    #df_full_ef_et_stability_automation = match_automation(df_full_ef_et_stability)
+    df_full_ef_et_stability['activity'] = replace_special_characters(df_full_ef_et_stability['activity'])
 
-    return df_full_ef_et_stability_automation
+    return df_full_ef_et_stability
 
+# Add "automated" to activity if timestamp of current event that executes the activity equals the previous event's
+# timestamp for all executions
+# def match_automation(df):
+#     for key in activity_automation_dict:
+#         if len(activity_automation_dict[key]) == 1 and activity_automation_dict[key][0] == True:
+#             activity_automation_dict[key] = True
+#         else:
+#             activity_automation_dict[key] = False
+#
+#     automation_list = []
+#     for index, row in df.iterrows():
+#         if row['activity'] in activity_automation_dict:
+#            automation_list.append('Automated' if activity_automation_dict[row['activity']] else '')
+#         else:
+#             automation_list.append('')
+#     df[c.CLASS_LABEL] = automation_list
+#
+#     return df
 
-def match_automation(df):
-    for key in activity_automation_dict:
-        if len(activity_automation_dict[key]) == 1 and activity_automation_dict[key][0] == True:
-            activity_automation_dict[key] = True
-        else:
-            activity_automation_dict[key] = False
+# Extract if timestamp of current event that executes the activity equals the previous event's
+# timestamp for all executions
+# def extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity):
+#     global activity_automation_dict
+#     isAutomated = old_time == current_time
+#
+#     if row['activity'] not in activity_automation_dict:
+#         if current_trace == old_trace:
+#             if c.TIMESTAMP_MODE != 'START_AND_END':
+#                 value = [isAutomated]
+#                 key = row['activity']
+#                 activity_automation_dict.update({key: value})
+#             else:
+#                 if old_activity == row['activity']:
+#                     value = [isAutomated]
+#                     key = row['activity']
+#                     activity_automation_dict.update({key: value})
+#     else:
+#         if current_trace == old_trace:
+#             if c.TIMESTAMP_MODE != 'START_AND_END':
+#                 value = activity_automation_dict.get(row['activity'])
+#                 value.append(isAutomated)
+#                 kv = {row['activity']: list(set(value))}
+#                 activity_automation_dict.update(kv)
+#             else:
+#                 if old_activity == row['activity']:
+#                     value = activity_automation_dict.get(row['activity'])
+#                     value.append(isAutomated)
+#                     kv = {row['activity']: list(set(value))}
+#                     activity_automation_dict.update(kv)
 
-    automation_list = []
-    for index, row in df.iterrows():
-        if row['activity'] in activity_automation_dict:
-           automation_list.append('Automated' if activity_automation_dict[row['activity']] else '')
-        else:
-            automation_list.append('')
-    df[c.CLASS_LABEL] = automation_list
-
-    return df
-
-
-def extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity):
-    global activity_automation_dict
-    isAutomated = old_time == current_time
-
-    if row['activity'] not in activity_automation_dict:
-        if current_trace == old_trace:
-            if c.TIMESTAMP_MODE != 'START_AND_END':
-                value = [isAutomated]
-                key = row['activity']
-                activity_automation_dict.update({key: value})
-            else:
-                if old_activity == row['activity']:
-                    value = [isAutomated]
-                    key = row['activity']
-                    activity_automation_dict.update({key: value})
-    else:
-        if current_trace == old_trace:
-            if c.TIMESTAMP_MODE != 'START_AND_END':
-                value = activity_automation_dict.get(row['activity'])
-                value.append(isAutomated)
-                kv = {row['activity']: list(set(value))}
-                activity_automation_dict.update(kv)
-            else:
-                if old_activity == row['activity']:
-                    value = activity_automation_dict.get(row['activity'])
-                    value.append(isAutomated)
-                    kv = {row['activity']: list(set(value))}
-                    activity_automation_dict.update(kv)
-
-
+# Extract distinct number of resources from resource attribute
 def extract_number_resources(df):
     action_bo_dict = {}
     for index, row in df.iterrows():
@@ -204,7 +206,7 @@ def extract_number_resources(df):
         df.drop(columns=c.ORG_RESOURCE_ATTRIBUTE_NAME, inplace=True)
     return df
 
-
+# Extract stability
 def extract_stability(df):
     # Retrieve std deviation
     std_duration = df.groupby('activity')['duration_minutes'].std().reset_index()
@@ -220,7 +222,7 @@ def extract_stability(df):
     result_df['stability'] = list_stability
     return result_df
 
-
+# Extract failure rate
 def extract_failure_rate(df, full_df):
     df_act_trace_occurrence = full_df.groupby('activity')[c.TRACE_ATTRIBUTE_NAME].nunique().reset_index()
     df_act_trace_occurrence.columns = ['activity', 'trace_occurrence']
@@ -237,7 +239,7 @@ def extract_failure_rate(df, full_df):
 
     return df
 
-
+# Extract standardization features
 def extract_deterministic_standardization_feature(df, log):
     parameters = {constants.PARAMETER_CONSTANT_ACTIVITY_KEY: c.ACTIVITY_ATTRIBUTE_NAME}
     fp_log=footprints_discovery.apply(log, variant=footprints_discovery.Variants.ENTIRE_EVENT_LOG, parameters=parameters)
@@ -299,7 +301,7 @@ def extract_deterministic_standardization_feature(df, log):
     result_df['preceding_activities_standardization'].fillna(0, inplace=True)
     return result_df
 
-
+# Extract relative execution frequency
 def extract_execution_frequency(df):
     relative_ef_df = df['activity'].value_counts(normalize=True).reset_index()
     ef_df = df['activity'].value_counts().reset_index()
@@ -309,7 +311,7 @@ def extract_execution_frequency(df):
     result_df = result_df.join(ef_df.set_index('activity'), on='activity')
     return result_df
 
-
+# Extract execution time related features
 def extract_execution_time(df):
     duration = []
     old_trace = ""
@@ -318,8 +320,8 @@ def extract_execution_time(df):
     for index, row in df.iterrows():
         current_trace = row[c.TRACE_ATTRIBUTE_NAME]
         current_time = row[c.TIMESTAMP_ATTRIBUTE_NAME]
-        if c.MODE == 'PREPARATION':
-            extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity)
+        #if c.MODE == 'PREPARATION':
+            #extract_automation(old_trace, old_time, current_trace, current_time, row, old_activity)
 
         if current_trace != old_trace:
             # Start a new trace -> first activity has no duration
@@ -354,7 +356,7 @@ def extract_execution_time(df):
     result_df['et_relative'].fillna(-1, inplace=True)
     return result_df
 
-
+# Extract semantic tags from event label
 def extract_activity_labels(df):
     events = df['activity']
     tagged_events = bp.main(events)
@@ -412,7 +414,7 @@ def extract_activity_labels(df):
     result_df = add_alternative_resource_attributes(df, result_df)
     return result_df
 
-
+# Extract from resource attribute how many resources exist for the activity
 def add_alternative_resource_attributes(df, result_df):
     temp_df = pd.merge(df, result_df[["activity", "executing resource"]], on="activity", how="left")
     if c.ORG_RESOURCE_ATTRIBUTE_NAME in temp_df:
@@ -424,7 +426,7 @@ def add_alternative_resource_attributes(df, result_df):
 
     return result_df
 
-
+# Extract IT relatedness with spaCy
 def extract_IT_relatedness(df):
     nlp = spacy.load("en_core_web_md")
     it_related_terms = ['access', 'Access Control List', 'access time', 'account', 'account name', 'address',
@@ -491,6 +493,7 @@ def extract_IT_relatedness(df):
     it_related_terms = ' '.join(it_related_terms)
     it_tokens = nlp(it_related_terms)
     max_similarities = []
+    # Find max similarity between each word of the activity and each term of the list of IT terms
     for index, row in df.iterrows():
         similarity_dict = {}
         activity = row["activity"].lower()

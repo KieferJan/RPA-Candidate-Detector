@@ -1,20 +1,18 @@
 import pickle
 import pandas as pd
 import constants as c
-import numpy as np
 
-
-
+# Define Workflow
 def start(df):
-   #X, new_df = preprocess(df)
-   X = preprocess(df)
-   predictions = predict(X)
+    X = preprocess(df)
+    predictions = predict(X)
 
-   df = df.join(predictions)
-   df = reorder(df)
-   df = renameColumns(df)
-   return df
+    df = df.join(predictions)
+    df = reorder(df)
+    df = renameColumns(df)
+    return df
 
+# If values are missing add default values
 def preprocess(df):
     # Adjust missing values
     values = {'activity': 'missing',
@@ -43,13 +41,9 @@ def preprocess(df):
 
     X = transform_data(df)
 
-    for col in c.ONE_HOT_COLS:
-        if col not in X.columns:
-            X[col] = np.nan
-    X.fillna(value=0, inplace=True)
     return X
 
-
+# Apply standard scaler and one hot encoder and return the data frame with the feature subset on which the SVM is trained
 def transform_data(df):
     # numeric fetures scaling
     stscaler = pickle.load(open('./classifier/model/scaler.pkl', 'rb'))
@@ -60,18 +54,19 @@ def transform_data(df):
 
     # transform categorical data
     X_trans = X_trans.join(pd.DataFrame(onehotencoder.transform(df[c.CAT_FEATURES]).toarray(),
-                            columns=onehotencoder.get_feature_names(c.CAT_FEATURES)))
+                                        columns=onehotencoder.get_feature_names(c.CAT_FEATURES)))
 
     X_trans = X_trans[c.FEATURE_SUBSET]
 
     return X_trans
 
+# Load model and predict probability
 def predict(X):
     # and later you can load it
-    with open('./classifier/model/rf_model.pkl', 'rb') as f:
-        rf = pickle.load(f)
+    with open('./classifier/model/svm_model.pkl', 'rb') as f:
+        svm = pickle.load(f)
 
-    prediction = rf.predict_proba(X)
+    prediction = svm.predict_proba(X)
 
     result = pd.DataFrame({'Prob_Automated': prediction[:, 0], 'Prob_Low Automatable User Task': prediction[:, 1],
                            'Prob_High Automatable User Task': prediction[:, 2],
@@ -79,12 +74,13 @@ def predict(X):
 
     return result
 
+# Apply order of the output file
 def reorder(df):
-
     df = df[c.TARGET_ORDER].sort_values(by='Prob_High Automatable User Task', ascending=False)
 
     return df
 
+# Rename columns to be in line with the feature names mentioned in the thesis
 def renameColumns(df):
     df.rename(columns={'following_activities_standardization': 'standardization_f_e',
                        'preceding_activities_standardization': 'standardization_p_e',
@@ -99,9 +95,9 @@ def renameColumns(df):
                        'C_activity_High Automatable User Task': 'event label is C_H',
                        'C_business object_Automated': 'BO is Digital',
                        'C_business object_Physical or Cognitive Task': 'BO is Physical',
-                        'C_action_Automated': 'action is C_A',
+                       'C_action_Automated': 'action is C_A',
                        'C_action_Low Automatable User Task': 'action is C_L',
-                        'C_action_High Automatable User Task': 'action is C_H',
-                        'C_action_Physical or Cognitive Task': 'action is C_P',
+                       'C_action_High Automatable User Task': 'action is C_H',
+                       'C_action_Physical or Cognitive Task': 'action is C_P',
                        })
     return df
