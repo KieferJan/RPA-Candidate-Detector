@@ -1,6 +1,6 @@
 # RPA-detector
--This project was developed on Python 3.7
--Install the requirements with pip install requirements.txt
+- This project was developed on Python 3.7
+- Install the requirements with "pip install requirements.txt"
 
 ## Download the required models
 Due to limited storage on GitHub, please refer to the following Google Drive and download the models contained
