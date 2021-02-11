@@ -28,16 +28,16 @@ def preprocess(orig_df, col):
     df = df[df[col] != 'missing']
 
     # Map class label
-    if col == 'business object':
-         df['task_type'] = df['task_type'].map(
-            {'Physical or Cognitive Task': 'Physical or Cognitive Task', 'Low Automatable User Task': 'Automated',
-            'High Automatable User Task': 'Automated', 'Automated': 'Automated'})
+    #if col == 'business object':
+         #df['task_type'] = df['task_type'].map(
+            #{'Physical or Cognitive Task': 'Physical or Cognitive Task', 'Low Automatable User Task': 'Automated',
+            #'High Automatable User Task': 'Automated', 'Automated': 'Automated'})
 
-    unique_labels = df['task_type'].unique()
-    label_dict = {}
-    for index, unique_label in enumerate(unique_labels):
-         label_dict[unique_label] = index
-    df['label'] = df['task_type'].replace(label_dict)
+    #unique_labels = df['task_type'].unique()
+    #label_dict = {}
+    #for index, unique_label in enumerate(unique_labels):
+         #label_dict[unique_label] = index
+    #df['label'] = df['task_type'].replace(label_dict)
 
     return df
 
@@ -71,8 +71,8 @@ def predict(col, df):
 
     input_ids_pred = encoded_data_pred['input_ids']
     attention_masks_pred = encoded_data_pred['attention_mask']
-    labels_pred = torch.tensor(df.label.values)
-    dataset_pred = TensorDataset(input_ids_pred, attention_masks_pred, labels_pred)
+    #labels_pred = torch.tensor(df.label.values)
+    dataset_pred = TensorDataset(input_ids_pred, attention_masks_pred) #, labels_pred
 
     batch_size = c.BATCH_SIZE
 
@@ -84,13 +84,13 @@ def predict(col, df):
     for batch in dataloader_pred:
         inputs = {'input_ids': batch[0],
                   'attention_mask': batch[1],
-                  'labels': batch[2],
+                  #'labels': batch[2],
                   }
 
         with torch.no_grad():
             outputs = model(**inputs)
 
-        logits = outputs[1]
+        logits = outputs[0]
 
         logits = logits.numpy()
         preds.append(F.softmax(torch.tensor(logits), dim=1))

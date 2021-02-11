@@ -76,7 +76,13 @@ def predict(X):
 
 # Apply order of the output file
 def reorder(df):
+    tasktype_temp = []
+    if 'task_type' in df:
+        tasktype_temp = df['task_type']
     df = df[c.TARGET_ORDER].sort_values(by='Prob_High Automatable User Task', ascending=False)
+
+    if tasktype_temp:
+        df['task_type'] = tasktype_temp
 
     return df
 

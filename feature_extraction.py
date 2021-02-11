@@ -40,7 +40,7 @@ def import_xes():
 def import_csv():
     pd.set_option('display.max_columns', None)
     pd.options.display.width = None
-    log_csv = pd.read_csv('event logs/{}.csv'.format(c.FILE_NAME), sep=c.SEPARATOR)
+    log_csv = pd.read_csv('event_logs_as_csv/{}.csv'.format(c.FILE_NAME), sep=c.SEPARATOR)
     log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
     log_csv = log_csv.sort_values(by=[c.TRACE_ATTRIBUTE_NAME, c.TIMESTAMP_ATTRIBUTE_NAME])
     attribute_list_copy = []
@@ -61,7 +61,7 @@ def join_full_in_distinct(full_df, distinct_df):
     full_grouped_et = full_df.groupby('activity')['median_execution_time'].median().reset_index()
     full_grouped_rel_et = full_df.groupby('activity')['et_relative'].median().reset_index()
     full_grouped_stability = full_df.groupby('activity')['stability'].mean().reset_index()
-    full_grouped_automation = full_df.groupby('activity')[c.CLASS_LABEL].apply(lambda x: ','.join(x)).reset_index()
+    #full_grouped_automation = full_df.groupby('activity')[c.CLASS_LABEL].apply(lambda x: ','.join(x)).reset_index()
 
 
     # PREPROCCES the data frame
@@ -70,13 +70,13 @@ def join_full_in_distinct(full_df, distinct_df):
     full_grouped_ef.columns = ['activity', 'ef_relative']
     full_grouped_rel_et.columns = ['activity', 'et_relative']
     full_grouped_stability.columns = ['activity', 'stability']
-    full_grouped_automation[c.CLASS_LABEL] = full_grouped_automation[c.CLASS_LABEL].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
+    #full_grouped_automation[c.CLASS_LABEL] = full_grouped_automation[c.CLASS_LABEL].apply(lambda x: ', '.join(sorted(set(x.split(',')))))
 
     result_df = distinct_df.join(full_grouped_ef.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_rel_et.set_index('activity'), on='activity')
     result_df = result_df.join(full_grouped_stability.set_index('activity'), on='activity')
-    result_df = result_df.join(full_grouped_automation.set_index('activity'), on='activity')
+    #result_df = result_df.join(full_grouped_automation.set_index('activity'), on='activity')
     result_df['process_name'] = c.FILE_NAME
 
     return result_df
