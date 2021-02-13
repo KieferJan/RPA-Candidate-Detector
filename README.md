@@ -3,19 +3,26 @@
 
 ## 1. Install the requirements with "pip install requirements.txt"
 
-## 2. Download the required models and tore them in the respective folder
+## 2. Download the required models and store them in the respective folder
 Due to limited storage on GitHub, please refer to the following Google Drive Storage download the respective models.
 
 ### For the bert_automation_indication directory:
 This directory handles the extraction of the language based features. You can get access to the pyTorch Models via the link below.
 https://drive.google.com/drive/folders/1MIR1Iap5p2Ap7M5_GZRp7E-bKjWd9dzW?usp=sharing
 
-In total, three models need to be stored in the project directory "bert_automation_indication > Model > action | activity | business object"
+In total, three models need to be stored.
+
+| Drive Model     | Project Directory                                            |
+|-----------------|--------------------------------------------------------------|
+| action          | bert_automation_indication > model > action > model          |
+| activity        | bert_automation_indication > model > activity > model        |
+| business object | bert_automation_indication > model > business object > model |
 
 ### For the bert_parser directory:
+This directory contais the semantic tag parser for event logs. You can get access to the Model via the link below.
+https://drive.google.com/drive/folders/1MLA9WhZRlWAh1-5OdeXz0YQzH6Q7VYn9?usp=sharing
 
-
-Please store all the files in the projectdirectory "bert_parser" > "model"
+Please store all the files in the project directory "bert_parser" > "model"
 
 ## 3. Configure the RPA candidate identifier within the constants.py file (e.g. to set the name of the event log to process, to specify the names of the event log attributes ...)
 
