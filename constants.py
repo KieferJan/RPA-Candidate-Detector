@@ -1,7 +1,7 @@
 # Settings for the feature_extraction: Here you have to specify the event log attributes
-FILE_NAME = 'CCC19 - Log XES' #Has to be stored in the input_event_logs directory
+FILE_NAME = 'a-RequestForPayment' #Has to be stored in the input_event_logs directory
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
-ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
+ACTIVITY_ATTRIBUTE_NAME = 'concept:name' # activityNameEN, concept:name
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'
 ORG_RESOURCE_ATTRIBUTE_NAME = 'org:resource'
 ORG_ROLE_ATTRIBUTE_NAME = 'org:role'

@@ -15,8 +15,9 @@ def apply_bert(df):
     for col in c.TEXT_COLUMNS:
         prep_df = preprocess(df, col)
         prep_df = prep_df.drop_duplicates(subset=[col])
-        result_df = predict(col, prep_df)
-        original_df = original_df.join(result_df.set_index(col), on=col)
+        if not prep_df.empty:
+            result_df = predict(col, prep_df)
+            original_df = original_df.join(result_df.set_index(col), on=col)
     return original_df
 
 

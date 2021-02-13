@@ -39,7 +39,12 @@ def preprocess(df):
 
     df.fillna(value=values, inplace=True)
 
+    for col in c.FEATURE_SUBSET:
+        if col not in df.columns:
+            df[col] = 0.0
+
     X = transform_data(df)
+
 
     return X
 

@@ -209,7 +209,7 @@ def extract_number_resources(df):
 # Extract stability
 def extract_stability(df):
     # Retrieve std deviation
-    std_duration = df.groupby('activity')['duration_minutes'].std().reset_index()
+    std_duration = df.groupby('activity')['duration_minutes'].std(ddof=0).reset_index()
     std_duration.columns = ['activity', 'standard_deviation_duration']
     result_df = df.join(std_duration.set_index('activity'), on='activity')
     list_stability = []
