@@ -5,5 +5,5 @@
 .vscode/
 .idea/
 #/input_event_logs/*
-/bert_parser/model
-/bert_automation_indication/Model/
+#/bert_parser/model
+#/bert_automation_indication/Model/

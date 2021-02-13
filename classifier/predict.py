@@ -88,7 +88,7 @@ def reorder(df):
 
 # Rename columns to be in line with the feature names mentioned in the thesis
 def renameColumns(df):
-    df.rename(columns={'following_activities_standardization': 'standardization_f_e',
+    df = df.rename(columns={'following_activities_standardization': 'standardization_f_e',
                        'preceding_activities_standardization': 'standardization_p_e',
                        'deterministic_following_activity': 'deterministic_f_e',
                        'deterministic_preceding_activity': 'deterministic_p_e',

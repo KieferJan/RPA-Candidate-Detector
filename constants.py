@@ -1,5 +1,5 @@
 # Settings for the feature_extraction: Here you have to specify the event log attributes
-FILE_NAME = 'BPI_Challenge_2012' #Has to be stored in the input_event_logs directory
+FILE_NAME = 'CCC19 - Log XES' #Has to be stored in the input_event_logs directory
 TRACE_ATTRIBUTE_NAME = 'case:concept:name'
 ACTIVITY_ATTRIBUTE_NAME = 'concept:name'
 TIMESTAMP_ATTRIBUTE_NAME = 'time:timestamp'
