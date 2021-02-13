@@ -1,8 +1,9 @@
 # RPA-detector
 - This project was developed on Python 3.7
-- Install the requirements with "pip install requirements.txt"
 
-## Download the required models
+## 1. Install the requirements with "pip install requirements.txt"
+
+## 2. Download the required models and tore them in the respective folder
 Due to limited storage on GitHub, please refer to the following Google Drive Storage download the respective models.
 
 ### For the bert_automation_indication directory:
@@ -15,6 +16,8 @@ In total, three models need to be stored in the project directory "bert_automati
 
 
 Please store all the files in the projectdirectory "bert_parser" > "model"
+
+## 3. Configure the RPA candidate identifier within the constants.py file (e.g. to set the name of the event log to process, to specify the names of the event log attributes ...)
 
 ## Project structure
 Below is a brief introduction into the project structure.
@@ -45,6 +48,3 @@ Below is a brief description of the important files.
   - Extracts the preliminary data set features directly from the event log
   - Extracts the language-based features into the preliminary data set
   - Predicts tha RPA candidates based on the complete data set (Output into the directory "Output" > "predictedDataset.csv"
-
-
-## Complementary paper and background
